@@ -7,25 +7,29 @@ install.packages("tm")
 
 #Iniciamos sesión en Spark
 
-
 if (nchar(Sys.getenv("SPARK_HOME")) < 1) {
   Sys.setenv(SPARK_HOME = "/Users/joseadiazg/spark-2.2.0-bin-hadoop2.7")
 }
 library(SparkR, lib.loc = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib")))
-sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "2g"))
+sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "6g"))
 
 
-#Cargamos Dataframe  
+#Cargamos los datos en dataframes
 
-tweets <- read.df("/Users/joseadiazg/Desktop/output.json", "json")
+tweets <- read.json(c("/Users/joseadiazg/Desktop/data/filterdata/enerofilter.json", "/Users/joseadiazg/Desktop/data/filterdata/febrerofilter.json",
+                      "/Users/joseadiazg/Desktop/data/filterdata/mayofilter.json","/Users/joseadiazg/Desktop/data/filterdata/juniofilter.json"))
 
+#Si solo queremos cargar uno
+
+#tweets <- read.df("/Users/joseadiazg/Desktop/output.json", "json")
 
 #Filtramos los que no sean RT ya que los RT estan repetidos y pueden hacernos falsear el modelo
 
 head(filter(tweets, tweets$is_retweet==FALSE))
 
-
 #Cargamos los datos en un dataframe filtrado
+
+#TODO: consultas sql para reducir la dimensionalidad. 
 
 filterdf<-filter(tweets, tweets$is_retweet==FALSE)
 
@@ -37,3 +41,41 @@ localdf<-collect(tweets)
 #Minería de textos
 #***********************************************************
 
+library(tm)
+
+#Construimos un conjunto de datos con el texto de los Tuits
+
+myCorpus <- Corpus(VectorSource(localdf$text))
+
+#Pasamos todos a minuscula 
+
+myCorpus <- tm_map(myCorpus, content_transformer(tolower))
+
+#Borramos URLS que no tienen ningun sentido en nuestro proceso de minado
+
+removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+myCorpus <- tm_map(myCorpus, content_transformer(removeURL))
+
+# Borramos caracteres raros tales como emojis o caracteres no alfabéticos
+
+removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x) 
+myCorpus <- tm_map(myCorpus, content_transformer(removeNumPunct))
+
+# Eliminamos stop words en ingles
+
+# Añadimos la palabra "via" ya que se usa para referenciar usuarios en tweeter
+
+myStopwords <- c(setdiff(stopwords('english'), c("via")))
+myCorpus <- tm_map(myCorpus, removeWords, myStopwords)
+
+# Borramos los espacios extra
+
+myCorpus <- tm_map(myCorpus, stripWhitespace)
+
+#Mantenemos una copia
+
+myCorpusCopy <- myCorpus
+
+#******************************************
+# STEAMING
+#******************************************
