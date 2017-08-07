@@ -79,3 +79,17 @@ myCorpusCopy <- myCorpus
 #******************************************
 # STEAMING
 #******************************************
+
+myCorpus <- tm_map(myCorpus, stemDocument)
+
+stemCompletion2 <- function(x, dictionary) {
+  x <- unlist(strsplit(as.character(x), " "))
+  x <- x[x != ""]
+  x <- stemCompletion(x, dictionary=dictionary) 
+  x <- paste(x, sep="", collapse=" ") 
+  PlainTextDocument(stripWhitespace(x))
+}
+
+myCorpus <- lapply(myCorpus, stemCompletion2, dictionary=myCorpusCopy)
+myCorpus <- Corpus(VectorSource(myCorpus))
+
