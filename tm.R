@@ -93,3 +93,19 @@ stemCompletion2 <- function(x, dictionary) {
 myCorpus <- lapply(myCorpus, stemCompletion2, dictionary=myCorpusCopy)
 myCorpus <- Corpus(VectorSource(myCorpus))
 
+#****************************************
+# Obtenemos la matriz de frecuencias
+#****************************************
+
+tdm <- TermDocumentMatrix(myCorpus,control = list(wordLengths = c(1, Inf)))
+m <- as.matrix(tdm)
+
+#***************************************
+# Pintamos la matriz de nube de terminos
+#***************************************
+
+#Con la nube de terminos podemos hacernos una idea de que se hablaba
+#en Twitter durante estos meses.
+
+word.freq <- sort(rowSums(m), decreasing = T)
+pal <- brewer.pal(9, "BuGn")[-(1:4)]
