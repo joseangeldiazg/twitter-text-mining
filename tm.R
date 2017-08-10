@@ -2,7 +2,8 @@ install.packages("devtools")
 install.packages("dplyr")
 install.packages("SnowballC")
 install.packages("tm")
-
+install.packages("RColorBrewer")
+install.packages("wordcloud")
 #Carga de datos en Dataframes con Spark
 
 #Iniciamos sesión en Spark
@@ -103,9 +104,15 @@ m <- as.matrix(tdm)
 #***************************************
 # Pintamos la matriz de nube de terminos
 #***************************************
+library(RColorBrewer)
+library(wordcloud)
 
 #Con la nube de terminos podemos hacernos una idea de que se hablaba
 #en Twitter durante estos meses.
 
 word.freq <- sort(rowSums(m), decreasing = T)
 pal <- brewer.pal(9, "BuGn")[-(1:4)]
+
+wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3,random.order = F, colors = pal)
+
+
