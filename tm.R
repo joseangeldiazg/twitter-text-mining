@@ -104,6 +104,7 @@ m <- as.matrix(tdm)
 #***************************************
 # Pintamos la matriz de nube de terminos
 #***************************************
+
 library(RColorBrewer)
 library(wordcloud)
 
@@ -113,6 +114,14 @@ library(wordcloud)
 word.freq <- sort(rowSums(m), decreasing = T)
 pal <- brewer.pal(9, "BuGn")[-(1:4)]
 
-wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3,random.order = F, colors = pal)
+#wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3,random.order = F, colors = pal)
 
+#Tenemos 1496370 tuits, para poder pintar la nube de palabras y hacernos una idea de lo que se 
+#cuece en twitter durante esos meses, nos quedaremos con las palabras que al menos aparecen en
+#1000 tuits
 
+wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1000,random.order = F, colors = pal)
+
+wordcloud(words = names(word.freq), freq = word.freq, min.freq = 2000,random.order = F, colors = pal)
+
+wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3000,random.order = F, colors = pal)
