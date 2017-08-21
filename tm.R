@@ -125,3 +125,30 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1000,random.ord
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 2000,random.order = F, colors = pal)
 
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3000,random.order = F, colors = pal)
+
+
+#Análisis de sentimientos básico
+
+# TODO: ARREGLAR FALLOS CON EL CARACTER <
+
+require(devtools)
+install_github("sentiment140", "okugami79")
+
+library(sentiment)
+
+#Copia de seguridad
+tweets2<-localdf
+
+#Eliminamos caracteres raros o extraños
+tweets2 <- removeNumPunct(tweets2$text)
+
+tweets2[!grepl("<", getElement(tweets2, "text")),]
+
+
+#Corremos algoritmo de análisis de sentimientos
+
+
+sentiments <- sentiment(tweets2$text)
+
+table(sentiments$polarity)
+
