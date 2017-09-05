@@ -1,28 +1,26 @@
-install.packages("devtools")
-install.packages("dplyr")
-install.packages("SnowballC")
-install.packages("tm")
-install.packages("RColorBrewer")
-install.packages("wordcloud")
+
+install.packages(c("NLP", "openNLP", "RWeka", "qdap","devtools","dplyr"))
+install.packages(c("SnowballC", "tm", "RColorBrewer", "wordcloud"  ))
+
+#**********************************************************
 #Carga de datos en Dataframes con Spark
+#**********************************************************
 
 #Iniciamos sesión en Spark
 
 if (nchar(Sys.getenv("SPARK_HOME")) < 1) {
   Sys.setenv(SPARK_HOME = "/Users/joseadiazg/spark-2.2.0-bin-hadoop2.7")
 }
+
 library(SparkR, lib.loc = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib")))
 sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "6g"))
 
 
 #Cargamos los datos en dataframes
 
-tweets <- read.json(c("/Users/joseadiazg/Desktop/data/filterdata/enerofilter.json", "/Users/joseadiazg/Desktop/data/filterdata/febrerofilter.json",
-                      "/Users/joseadiazg/Desktop/data/filterdata/mayofilter.json","/Users/joseadiazg/Desktop/data/filterdata/juniofilter.json"))
-
-#Si solo queremos cargar uno
-
-#tweets <- read.df("/Users/joseadiazg/Desktop/output.json", "json")
+tweets <- read.json(c("/Users/joseadiazg/Desktop/data/enero.json", "/Users/joseadiazg/Desktop/data/febrero.json",
+                      "/Users/joseadiazg/Desktop/data/mayo.json","/Users/joseadiazg/Desktop/data/junio.json",
+                      "/Users/joseadiazg/Desktop/data/julio.json"))
 
 #Filtramos los que no sean RT ya que los RT estan repetidos y pueden hacernos falsear el modelo
 
@@ -30,13 +28,18 @@ head(filter(tweets, tweets$is_retweet==FALSE))
 
 #Cargamos los datos en un dataframe filtrado
 
-#TODO: consultas sql para reducir la dimensionalidad. 
-
 filterdf<-filter(tweets, tweets$is_retweet==FALSE)
+
+#TODO: Un RT puede ser considerado a favor en la mayoria de los casos, por ello,
+#queda pendiente una versión en la que tendrán mas peso estos "documentos".
 
 #Traemos los datos de la sesion Spark a una sesión en local
 
 localdf<-collect(tweets)
+
+#Creamos un nuevo dataframe con todos aquellos Tuits que no son RT
+
+noretuits<-collect(filterdf)
 
 #***********************************************************
 #Minería de textos
@@ -98,8 +101,15 @@ myCorpus <- Corpus(VectorSource(myCorpus))
 # Obtenemos la matriz de frecuencias
 #****************************************
 
+#Matriz de frecuencias con el proceso de steaming
+
 tdm <- TermDocumentMatrix(myCorpus,control = list(wordLengths = c(1, Inf)))
 m <- as.matrix(tdm)
+
+#Matriz de frecuencias sobre todo el contenido
+
+tdmAll <- TermDocumentMatrix(myCorpusCopy,control = list(wordLengths = c(1, Inf)))
+mAll <- as.matrix(tdmAll)
 
 #***************************************
 # Pintamos la matriz de nube de terminos
@@ -125,30 +135,4 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1000,random.ord
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 2000,random.order = F, colors = pal)
 
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3000,random.order = F, colors = pal)
-
-
-#Análisis de sentimientos básico
-
-# TODO: ARREGLAR FALLOS CON EL CARACTER <
-
-require(devtools)
-install_github("sentiment140", "okugami79")
-
-library(sentiment)
-
-#Copia de seguridad
-tweets2<-localdf
-
-#Eliminamos caracteres raros o extraños
-tweets2 <- removeNumPunct(tweets2$text)
-
-tweets2[!grepl("<", getElement(tweets2, "text")),]
-
-
-#Corremos algoritmo de análisis de sentimientos
-
-
-sentiments <- sentiment(tweets2$text)
-
-table(sentiments$polarity)
 
