@@ -136,3 +136,37 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 2000,random.ord
 
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3000,random.order = F, colors = pal)
 
+
+
+#***************************************
+# Name Entity Recognition
+#***************************************
+
+#Vamos a obtener los tuits de los que se habla de personas físicas
+
+library(NLP)
+library(openNLP)
+library(magrittr)
+
+
+#Tenemos que crear un corpus con el texto de los tuits
+
+tuitstext <- myCorpus %>%
+  lapply(paste0, collapse = " ") %>%
+  lapply(as.String)
+
+head(tuitstext)
+
+
+annotate_entities <- function(doc, annotation_pipeline) {
+  annotations <- annotate(doc, annotation_pipeline)
+  AnnotatedPlainTextDocument(doc, annotations)
+}
+
+
+itinerants_pipeline <- list(
+  Maxent_Sent_Token_Annotator(),
+  Maxent_Word_Token_Annotator(),
+  Maxent_Entity_Annotator(kind = "person"))
+
+
