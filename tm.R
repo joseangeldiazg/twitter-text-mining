@@ -1,6 +1,16 @@
 
+
+
+
+#**********************************************************
+#Instalación de los paquetes necesarios
+#**********************************************************
+
 install.packages(c("NLP", "openNLP", "RWeka", "qdap","devtools","dplyr"))
 install.packages(c("SnowballC", "tm", "RColorBrewer", "wordcloud"  ))
+install.packages("openNLPmodels.en",
+                 repos = "http://datacube.wu.ac.at/",
+                 type = "source")
 
 #**********************************************************
 #Carga de datos en Dataframes con Spark
@@ -149,24 +159,68 @@ library(openNLP)
 library(magrittr)
 
 
-#Tenemos que crear un corpus con el texto de los tuits
+#Obtenemos el texto de los tuits en una única variable
 
 tuitstext <- myCorpus %>%
   lapply(paste0, collapse = " ") %>%
   lapply(as.String)
 
-head(tuitstext)
-
+#Sobre esta variable obtendremos mediante dos funciones los nombres propios
 
 annotate_entities <- function(doc, annotation_pipeline) {
   annotations <- annotate(doc, annotation_pipeline)
   AnnotatedPlainTextDocument(doc, annotations)
 }
 
+#Queremos identificar personas por lo que kind=person 
+#Tambien podría ser lugares (kind=location), empresas (kind=organization) 
 
 itinerants_pipeline <- list(
   Maxent_Sent_Token_Annotator(),
   Maxent_Word_Token_Annotator(),
   Maxent_Entity_Annotator(kind = "person"))
 
+#Para evitar que tengamos problemas con el espacio que reserva para Java
+
+options(java.parameters = "-Xmx7000m")
+
+
+#TODO: Solucionar problema heap java
+
+#***************************************
+# Prueba con pocos datos
+#***************************************
+
+person_ann <- Maxent_Entity_Annotator(kind = "person")
+word_ann <- Maxent_Word_Token_Annotator()
+sent_ann <- Maxent_Sent_Token_Annotator()
+
+pipeline <- list(sent_ann,
+                 word_ann,
+                 person_ann)
+
+pruebaconpocos<-localdf$text[1:1000]
+
+texto1000tuits <-paste(pruebaconpocos, collapse = '')
+
+texto1000tuits <-as.String(texto1000tuits)
+
+
+names_annotations<- annotate_entities(pruebaconpocos, pipeline)
+names_doc <- AnnotatedPlainTextDocument(pruebaconpocos, names_annotations)
+
+
+
+#Creamos una funcion que nos ayude a obtener los nombres
+
+entities <- function(doc, kind) {
+  s <- doc$content
+  a <- annotations(doc)[[1]]
+  if(hasArg(kind)) {
+    k <- sapply(a$features, `[[`, "kind")
+    s[a[k == kind]]
+  } else {
+    s[a[a$type == "entity"]]
+  }
+}
 
