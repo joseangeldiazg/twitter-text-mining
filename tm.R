@@ -1,7 +1,3 @@
-
-
-
-
 #**********************************************************
 #Instalación de los paquetes necesarios
 #**********************************************************
@@ -191,6 +187,21 @@ options(java.parameters = "-Xmx7000m")
 # Prueba con pocos datos
 #***************************************
 
+#Obtenemos un conjunto de datos pequeño
+
+
+pruebaconpocos<-localdf$text[1:10000]
+
+pruebaconpocos<-as.String(pruebaconpocos)
+
+texto10000tuits <-paste(pruebaconpocos, collapse = '')
+
+texto10000tuits <-as.String(texto1000tuits)
+
+texto10000tuits <-pruebaconpocos
+
+#Declaramos las variables para el proceso NER
+
 person_ann <- Maxent_Entity_Annotator(kind = "person")
 word_ann <- Maxent_Word_Token_Annotator()
 sent_ann <- Maxent_Sent_Token_Annotator()
@@ -199,17 +210,14 @@ pipeline <- list(sent_ann,
                  word_ann,
                  person_ann)
 
-pruebaconpocos<-localdf$text[1:1000]
 
-texto1000tuits <-paste(pruebaconpocos, collapse = '')
+annotations <- annotate(texto10000tuits, list(sent_ann, word_ann))
 
-texto1000tuits <-as.String(texto1000tuits)
+head(annotations)
 
+names_annotations<- annotate(texto10000tuits, pipeline)
 
-names_annotations<- annotate_entities(pruebaconpocos, pipeline)
-names_doc <- AnnotatedPlainTextDocument(pruebaconpocos, names_annotations)
-
-
+names_doc <- AnnotatedPlainTextDocument(texto10000tuits, names_annotations)
 
 #Creamos una funcion que nos ayude a obtener los nombres
 
@@ -224,3 +232,4 @@ entities <- function(doc, kind) {
   }
 }
 
+entities<-entities(names_doc, kind = "person")
