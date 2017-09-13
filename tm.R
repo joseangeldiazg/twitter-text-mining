@@ -62,8 +62,19 @@ myCorpus <- Corpus(VectorSource(localdf$text))
 myCorpus <- tm_map(myCorpus, content_transformer(tolower))
 
 #Borramos URLS que no tienen ningun sentido en nuestro proceso de minado
+#Añadimos expresiones regulares para las principales redes sociales 
 
 removeURL <- function(x) gsub("http[^[:space:]]*", "", x)
+removePics <- function(x) gsub("pictwit[^[:space:]]*", "", x)
+removeSmartURL <- function(x) gsub("smarturl[^[:space:]]*", "", x)
+removeTwitter <- function(x) gsub("twittercom[^[:space:]]*", "", x)
+removeYoutube <- function(x) gsub("youtubecom[^[:space:]]*", "", x)
+removeYoutube2 <- function(x) gsub("youtube[^[:space:]]*", "", x)
+removeFb <- function(x) gsub("fbme[^[:space:]]*", "", x)
+removeBitly <- function(x) gsub("bitly[^[:space:]]*", "", x)
+removeInstagram <- function(x) gsub("instagramcom[^[:space:]]*", "", x)
+removeVine <- function(x) gsub("vineco[^[:space:]]*", "", x)
+
 myCorpus <- tm_map(myCorpus, content_transformer(removeURL))
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
@@ -141,7 +152,6 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1000,random.ord
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 2000,random.order = F, colors = pal)
 
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3000,random.order = F, colors = pal)
-
 
 
 #***************************************
