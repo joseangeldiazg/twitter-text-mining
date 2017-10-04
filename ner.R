@@ -67,6 +67,8 @@ namesList=list()
 
 #Hacemos name entity recognition sobre cada tuit
 
+t <- proc.time() # Inicia el cronómetro
+
 for(i in 1:length(mySmallCorpus))
 {
   oneTweet<-as.String(mySmallCorpus$content[i])
@@ -79,5 +81,14 @@ for(i in 1:length(mySmallCorpus))
     namesList<-c(list(names), namesList)
   }
 }
+
+#Nos quedamos sin repetidos
+
+namesListUnique<-unique(namesList)
+
+namesListUnique
+
+proc.time()-t    # Detiene el cronómetro
+
 
 
