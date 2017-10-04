@@ -35,14 +35,6 @@ copyMySmallCorpus<-mySmallCorpus
 # Name Entety Recognition con pocos datos (100000 tuits)
 #*******************************************************
 
-#Obtenemos un conjunto de datos pequeño
-
-pruebaconpocos<-mySmallCorpus$content
-
-pruebaconpocos<-as.String(pruebaconpocos)
-
-pruebaconpocos
-
 #Declaramos las variables para el proceso NER
 
 person_ann <- Maxent_Entity_Annotator(kind = "person")
@@ -54,15 +46,38 @@ pipeline <- list(sent_ann,
                  person_ann)
 
 
-annotations <- annotate(pruebaconpocos, list(sent_ann, word_ann))
+#Declaramos una funcion para obtener los nombres
 
-head(annotations)
+entities <- function(doc, kind) {
+  s <- doc$content
+  a <- annotations(doc)[[1]]
+  if(hasArg(kind)) {
+    k <- sapply(a$features, `[[`, "kind")
+    s[a[k == kind]]
+  } else {
+    s[a[a$type == "entity"]]
+  }
+}
 
-names_annotations<- annotate(pruebaconpocos, pipeline)
+#Declaramos estructruas de datos para guardar los nombres de cada tuit
 
-names_doc <- AnnotatedPlainTextDocument(pruebaconpocos, names_annotations)
+listPosition=list()
+listName=list()
+namesList=list()
 
-#Utilizamos la funcion creada que nos ayuda con los nombres. 
+#Hacemos name entity recognition sobre cada tuit
 
-entities<-entities(names_doc, kind = "person")
+for(i in 1:length(mySmallCorpus))
+{
+  oneTweet<-as.String(mySmallCorpus$content[i])
+  annotations <- annotate(oneTweet, list(sent_ann, word_ann))
+  names_annotations<- annotate(oneTweet, pipeline)
+  names_doc <- AnnotatedPlainTextDocument(oneTweet, names_annotations)
+  names<-entities(names_doc, kind = "person")
+  if(!(identical(names, character(0))))
+  {
+    namesList<-c(list(names), namesList)
+  }
+}
+
 
