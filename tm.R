@@ -7,7 +7,7 @@ install.packages(c("SnowballC", "tm", "RColorBrewer", "wordcloud"  ))
 install.packages("openNLPmodels.en",
                  repos = "http://datacube.wu.ac.at/",
                  type = "source")
-
+install.packages("doParallel")
 #**********************************************************
 #Carga de datos en Dataframes con Spark
 #**********************************************************
