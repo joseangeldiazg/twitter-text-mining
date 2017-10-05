@@ -116,6 +116,8 @@ obtieneNombres<-function(tuit)
 }
 
 
+#PROGRAMACIÓN PARALELA
+
 cores=detectCores()
 cl <- makeCluster(cores[1]-1)
 registerDoParallel(cl)
@@ -137,36 +139,3 @@ namesListUnique<-unique(namesList)
 namesListUnique
 
 proc.time()-t    # Detiene el cronómetro
-
-
-
-#PROGRAMACIÓN PARALELA
-
-cores=detectCores()
-cl <- makeCluster(cores[1]-1)
-registerDoParallel(cl)
-
-t <- proc.time() # Inicia el cronómetro
-
-namesList <-foreach(i=1:3,
-                    .combine=cbind,
-                    .packages = c("openNLP", "NLP", "tm", "base"),
-                    .export ="mySmallCorpus") %dopar% 
-                    {
-                      oneTweet<-as.String(mySmallCorpus$content[i])
-                      annotations <- annotate(oneTweet, list(sent_ann, word_ann))
-                      names_annotations<- annotate(oneTweet, pipeline)
-                      names_doc <- AnnotatedPlainTextDocument(oneTweet, names_annotations)
-                      names<-entities(names_doc, kind = "person")
-                      namesListTemp<-c(list(names))
-                      namesListTemp
-                    }
-
-
-namesListUnique<-unique(namesList)
-
-namesListUnique
-
-proc.time()-t    # Detiene el cronómetro
-
-
