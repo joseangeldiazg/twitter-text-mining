@@ -10,6 +10,12 @@ library(magrittr)
 library(foreach)
 library(doParallel)
 #*********************************
+# Opciones
+#*********************************
+
+options(java.parameters = "-Xmx6000m")
+
+#*********************************
 # Limpieza de datos
 #*********************************
 
@@ -106,16 +112,12 @@ for(i in 1:10)
 }
 
 proc.time()-t    # Detiene el cronómetro
+
 #Nos quedamos sin repetidos
 
 namesListUnique<-unique(namesList)
 
 namesListUnique
-
-proc.time()-t    # Detiene el cronómetro
-
-
-
 
 
 #PROGRAMACIÓN PARALELA
@@ -136,16 +138,14 @@ namesList <-foreach(i=1:10,
                     }
 
 stopCluster(cl)
-proc.time()-t    # Detiene el cronómetro
-namesListUnique<-unique(namesList)
 
+proc.time()-t    # Detiene el cronómetro
+
+namesListUnique<-unique(namesList)
 namesListUnique
 
-proc.time()-t    # Detiene el cronómetro
 
-
-
-#PROGRAMACIÓN PARALELA
+#PROGRAMACIÓN PARALELA II
 
 cores=detectCores()
 cl <- makeCluster(cores[1]-1)
@@ -163,8 +163,7 @@ namesList <-foreach(i=1:100, .combine=rbind, .packages = c("openNLP", "NLP", "tm
 stopCluster(cl)
 
 proc.time()-t    # Detiene el cronómetro
-namesListUnique<-unique(namesList)
 
+namesListUnique<-unique(namesList)
 namesListUnique
 
-proc.time()-t    # Detiene el cronómetro
