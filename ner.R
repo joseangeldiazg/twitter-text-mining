@@ -83,7 +83,7 @@ entities <- function(doc, kind) {
 
 #Función que realiza el proceso NER
 
-obtieneNombres<-function(tuit)
+obtieneNombres<-function(tuit, i)
 {
   gc()
   jgc()
@@ -92,37 +92,20 @@ obtieneNombres<-function(tuit)
   sent_ann <- Maxent_Sent_Token_Annotator()
   pipeline <- list(sent_ann,word_ann,person_ann)
   text<-as.String(tuit)
+  index<-i
   annotations <- annotate(text, list(sent_ann, word_ann))
   names_annotations<- annotate(text, pipeline)
   names_doc <- AnnotatedPlainTextDocument(text, names_annotations)
   names<-entities(names_doc, kind = "person")
-}
-
-#Declaramos estructruas de datos para guardar los nombres de cada tuit
-
-namesList=list()
-
-#Hacemos name entity recognition sobre cada tuit
-
-t <- proc.time() # Inicia el cronómetro
-
-for(i in 1:1000)
-{
-  oneTweet<-as.String(mySmallCorpus$content[i])
-  names<-obtieneNombres(oneTweet)
   if(!(identical(names, character(0))))
   {
-    namesList<-c(list(names), namesList)
+    return(names)
+  }
+  else
+  {
+    return(index)  
   }
 }
-
-proc.time()-t    # Detiene el cronómetro
-
-#Nos quedamos sin repetidos
-
-namesListUnique<-unique(namesList)
-
-namesListUnique
 
 #*************************************
 #PROGRAMACIÓN PARALELA
@@ -136,12 +119,12 @@ registerDoParallel(cl)
 
 t <- proc.time() # Inicia el cronómetro
 
-namesList <-foreach(i=1:10000,
+namesList <-foreach(i=1:10,
                     .combine=c, 
                     .packages = c("openNLP", "NLP", "tm", "base","rJava")) %dopar% 
                     {
                       oneTweet<-as.String(mySmallCorpus$content[i])
-                      obtieneNombres(oneTweet)
+                      obtieneNombres(oneTweet, i)
                     }
 
 stopCluster(cl)
