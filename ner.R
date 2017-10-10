@@ -9,12 +9,17 @@ library(openNLP)
 library(magrittr)
 library(foreach)
 library(doParallel)
+library(rJava)
 #*********************************
 # Opciones
 #*********************************
 
-options(java.parameters = "-Xmx6000m")
+options(java.parameters = "-Xmx8000m")
 
+jgc <- function()
+{
+  .jcall("java/lang/System", method = "gc")
+}  
 #*********************************
 # Limpieza de datos
 #*********************************
@@ -80,6 +85,8 @@ entities <- function(doc, kind) {
 
 obtieneNombres<-function(tuit)
 {
+  gc()
+  jgc()
   person_ann <- Maxent_Entity_Annotator(kind = "person")
   word_ann <- Maxent_Word_Token_Annotator()
   sent_ann <- Maxent_Sent_Token_Annotator()
@@ -93,15 +100,13 @@ obtieneNombres<-function(tuit)
 
 #Declaramos estructruas de datos para guardar los nombres de cada tuit
 
-listPosition=list()
-listName=list()
 namesList=list()
 
 #Hacemos name entity recognition sobre cada tuit
 
 t <- proc.time() # Inicia el cronómetro
 
-for(i in 1:10)
+for(i in 1:1000)
 {
   oneTweet<-as.String(mySmallCorpus$content[i])
   names<-obtieneNombres(oneTweet)
@@ -119,8 +124,11 @@ namesListUnique<-unique(namesList)
 
 namesListUnique
 
-
+#*************************************
 #PROGRAMACIÓN PARALELA
+#*************************************
+
+namesList=list()
 
 cores=detectCores()
 cl <- makeCluster(cores[1]-1)
@@ -128,13 +136,12 @@ registerDoParallel(cl)
 
 t <- proc.time() # Inicia el cronómetro
 
-namesList <-foreach(i=1:10, 
+namesList <-foreach(i=1:10000,
                     .combine=c, 
-                    .packages = c("openNLP", "NLP", "tm", "base")) %dopar% 
+                    .packages = c("openNLP", "NLP", "tm", "base","rJava")) %dopar% 
                     {
                       oneTweet<-as.String(mySmallCorpus$content[i])
-                      ListTemp<-obtieneNombres(oneTweet)
-                      ListTemp
+                      obtieneNombres(oneTweet)
                     }
 
 stopCluster(cl)
@@ -143,27 +150,3 @@ proc.time()-t    # Detiene el cronómetro
 
 namesListUnique<-unique(namesList)
 namesListUnique
-
-
-#PROGRAMACIÓN PARALELA II
-
-cores=detectCores()
-cl <- makeCluster(cores[1]-1)
-registerDoParallel(cl)
-
-t <- proc.time() # Inicia el cronómetro
-
-namesList <-foreach(i=1:100, .combine=rbind, .packages = c("openNLP", "NLP", "tm", "base")) %:% 
-  foreach(k=1:3, .combine=c) %dopar% 
-  {
-    oneTweet<-as.String(mySmallCorpus$content[i])
-    ListTemp<-obtieneNombres(oneTweet)
-    ListTemp
-  }
-stopCluster(cl)
-
-proc.time()-t    # Detiene el cronómetro
-
-namesListUnique<-unique(namesList)
-namesListUnique
-
