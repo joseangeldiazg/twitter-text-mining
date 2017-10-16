@@ -68,7 +68,7 @@ pipeline <- list(sent_ann,
                  person_ann)
 
 
-#Declaramos una funcion para obtener los nombres
+#Declaramos una función para obtener los nombres
 
 entities <- function(doc, kind) {
   s <- doc$content
@@ -103,7 +103,7 @@ obtieneNombres<-function(tuit, i)
   }
   else
   {
-    return(index)  
+    return(as.Integer(index))  
   }
 }
 
@@ -119,7 +119,7 @@ registerDoParallel(cl)
 
 t <- proc.time() # Inicia el cronómetro
 
-namesList <-foreach(i=1:10,
+namesList <-foreach(i=1:1000,
                     .combine=c, 
                     .packages = c("openNLP", "NLP", "tm", "base","rJava")) %dopar% 
                     {
@@ -133,3 +133,34 @@ proc.time()-t    # Detiene el cronómetro
 
 namesListUnique<-unique(namesList)
 namesListUnique
+
+#*************************************************
+#Limpiamos los tuits que no referencian a personas
+#*************************************************
+
+finalExample<-list()
+
+for(i in 1:1000)
+{
+  if(!(namesList[i]==i))
+  {
+    finalExample<-c(finalExample,mySmallCorpus$content[i])
+  }
+}
+
+finalExample
+
+#**************************************************
+# Creamos un nuevo corpus para aplicar Text Mining
+# sobre los tuits que hablan sobre personas.
+#**************************************************
+
+finalCorpus <- Corpus(VectorSource(finalExample))
+
+finalCorpus$content[2]
+
+# TODO: Usar FPgrowth para reglas de asociación. 
+# TODO: ¿Posible enfoque con clustering jerarquico?
+
+
+
