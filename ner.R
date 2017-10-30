@@ -159,8 +159,30 @@ finalCorpus <- Corpus(VectorSource(finalExample))
 
 finalCorpus$content[2]
 
+#**************************************************
+# Limpiamos de nuevo los datos
+#**************************************************
+
+# Hacemos una copia
+
+finalCorpusCopy<-finalCorpus
+
+# Borramos caracteres raros tales como emojis o caracteres no alfabéticos
+
+finalCorpus <- tm_map(finalCorpus, content_transformer(removeNumPunct))
+
+# Eliminamos stop words en ingles
+
+# Añadimos la palabra "via" ya que se usa para referenciar usuarios en tweeter
+
+myStopwords <- c(setdiff(stopwords('english'), c("via")))
+finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
+
+# Borramos los espacios extra
+
+finalCorpus <- tm_map(finalCorpus, stripWhitespace)
+
 # TODO: Usar FPgrowth para reglas de asociación. 
 # TODO: ¿Posible enfoque con clustering jerarquico?
-
 
 
