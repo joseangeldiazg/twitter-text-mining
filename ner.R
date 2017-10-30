@@ -182,12 +182,9 @@ finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
 finalCorpus <- tm_map(finalCorpus, stripWhitespace)
 
-
-
-
-
-
 # TODO: Usar FPgrowth para reglas de asociación. 
+
+
 # TODO: ¿Posible enfoque con clustering jerarquico?
 
 
