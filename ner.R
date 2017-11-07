@@ -10,6 +10,7 @@ library(magrittr)
 library(foreach)
 library(doParallel)
 library(rJava)
+library(arules)
 #*********************************
 # Opciones
 #*********************************
@@ -179,10 +180,27 @@ myStopwords <- c(setdiff(stopwords('english'), c("via")))
 finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
 # Borramos los espacios extra
-
 finalCorpus <- tm_map(finalCorpus, stripWhitespace)
+
+(finalCorpus$content[1])
+
+#*************************************************
+#Creamos las transacciones para las reglas de asociación
+#*************************************************
+
+items <- strsplit(as.character(finalCorpus$content), " ")
+transactions <- as(items, "transactions")
+
+help(apriori)
+
+itemsets <- apriori(transactions, parameter = list(sup = 0.1, conf = 0.1, target="frequent itemsets",minlen=1))
+inspect(itemsets)
+
+
+rules <- apriori(transactions, parameter = list(sup = 0.1, conf = 0.1, target="rules",minlen=1))
+inspect(rules)
+
+
 
 # TODO: Usar FPgrowth para reglas de asociación. 
 # TODO: ¿Posible enfoque con clustering jerarquico?
-
-
