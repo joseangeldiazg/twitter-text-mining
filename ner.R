@@ -11,6 +11,7 @@ library(foreach)
 library(doParallel)
 library(rJava)
 library(arules)
+library(plyr)
 #*********************************
 # Opciones
 #*********************************
@@ -226,7 +227,7 @@ if (nchar(Sys.getenv("SPARK_HOME")) < 1) {
 }
 
 library(SparkR, lib.loc = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib")))
-sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "6g"))
+sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "8g"))
 
 
 #Creamos un dataset para que FP-GROWTH pueda entenderlo
@@ -244,23 +245,26 @@ reduce_row = function(i) {
 itemsUnique<-lapply(finalCorpus$content[1:length(finalCorpus$content)],reduce_row)
 
 
+#Ya tenemos items únicos, ahora los pasamos a lista de elementos
 
+lapply(itemsUnique, write, "test.txt", append=TRUE)
 
+raw_data <- read.df(
+  "./test.txt",
+  source = "csv",
+  schema = structType(structField("raw_items", "string")))
 
+data <- selectExpr(raw_data, "split(raw_items, ' ') as items")
 
+fpm <- spark.fpGrowth(data, itemsCol="items", minSupport=0.001, minConfidence=0.6)
 
-dfspark <- selectExpr(createDataFrame(data.frame(rawItems = as.character(itemsUnique)
-)), "split(rawItems, ' ') AS items")
+# Show frequent itemsets
 
-fpm <- spark.fpGrowth(dfspark, itemsCol="items", minSupport=0.00000000000001, minConfidence=0.1)
+frequent_itemsets <- spark.freqItemsets(fpm)
+showDF(frequent_itemsets)
 
-# Extracting frequent itemsets
-
-spark.freqItemsets(fpm)
-
-# Extracting association rules
-
-spark.associationRules(fpm)
-
+# Show association rules
+association_rules <- spark.associationRules(fpm)
+showDF(association_rules)
 
 
