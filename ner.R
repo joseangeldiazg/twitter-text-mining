@@ -91,16 +91,16 @@ removeBitly <- function(x) gsub("bitly[^[:space:]]*", "", x)
 removeInstagram <- function(x) gsub("instagramcom[^[:space:]]*", "", x)
 removeVine <- function(x) gsub("vineco[^[:space:]]*", "", x)
 
-myCorpus <- tm_map(myCorpus, content_transformer(removeURL))
-myCorpus <- tm_map(myCorpus, content_transformer(removePics))
-myCorpus <- tm_map(myCorpus, content_transformer(removeSmartURL))
-myCorpus <- tm_map(myCorpus, content_transformer(removeTwitter))
-myCorpus <- tm_map(myCorpus, content_transformer(removeYoutube))
-myCorpus <- tm_map(myCorpus, content_transformer(removeYoutube2))
-myCorpus <- tm_map(myCorpus, content_transformer(removeFb))
-myCorpus <- tm_map(myCorpus, content_transformer(removeInstagram))
-myCorpus <- tm_map(myCorpus, content_transformer(removeVine))
-myCorpus <- tm_map(myCorpus, content_transformer(removeBitly))
+myCorpus$content <- removeURL(myCorpus$content)
+myCorpus$content <- removePics(myCorpus$content)
+myCorpus$content <- removeSmartURL(myCorpus$content)
+myCorpus$content <- removeTwitter(myCorpus$content)
+myCorpus$content <- removeYoutube(myCorpus$content)
+myCorpus$content <- removeYoutube2(myCorpus$content)
+myCorpus$content <- removeFb(myCorpus$content)
+myCorpus$content <- removeInstagram(myCorpus$content)
+myCorpus$content <- removeVine(myCorpus$content)
+myCorpus$content <- removeBitly(myCorpus$content)
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
 
@@ -118,10 +118,7 @@ myCorpus <- tm_map(myCorpus, removeWords, myStopwords)
 
 myCorpus <- tm_map(myCorpus, stripWhitespace)
 
-
-
 # El proceso NER dará errores si encontramos un tuit vacio, por lo tanto vamos a localizar estos tuits
-
 
 which(myCorpus$content==" ")
 which(myCorpus$content=="")
@@ -178,7 +175,7 @@ registerDoParallel(cl)
 
 t <- proc.time() # Inicia el cronómetro
 
-namesList <-foreach(i=1:100,
+namesList <-foreach(i=1:1000,
                     .combine=c, 
                     .packages = c("openNLP", "NLP", "tm", "base","rJava")) %dopar% 
                     {
@@ -196,15 +193,13 @@ proc.time()-t    # Detiene el cronómetro
 
 finalExample<-list()
 
-for(i in 1:length(mySmallCorpus))
+for(i in 1:10000)
 {
   if(!(namesList[i]==i))
   {
-    finalExample<-c(finalExample,mySmallCorpus$content[i])
+    finalExample<-c(finalExample,myCorpus$content[i])
   }
 }
-
-finalExample
 
 #**************************************************
 # Creamos un nuevo corpus para aplicar Text Mining
@@ -212,9 +207,7 @@ finalExample
 #**************************************************
 
 finalCorpus <- Corpus(VectorSource(finalExample))
-
-finalCorpus$content[2]
-
+rm(finalExample)
 #**************************************************
 # Limpiamos de nuevo los datos
 #**************************************************
@@ -246,3 +239,5 @@ finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 finalCorpus <- tm_map(finalCorpus, stripWhitespace)
 
 #Llegados a este punto solo tendremos tuits que hablan de personas
+
+finalCorpus$content
