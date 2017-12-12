@@ -118,6 +118,19 @@ myCorpus <- tm_map(myCorpus, removeWords, myStopwords)
 
 myCorpus <- tm_map(myCorpus, stripWhitespace)
 
+
+
+# El proceso NER dará errores si encontramos un tuit vacio, por lo tanto vamos a localizar estos tuits
+
+
+which(myCorpus$content==" ")
+which(myCorpus$content=="")
+
+# Vemnos que hay muchos vacios por lo que eliminaremos estos tuits del dataset
+
+myCorpus<-myCorpus[which(myCorpus$content!=" ")]
+myCorpus<-myCorpus[which(myCorpus$content!="")]
+
 #*******************************************************
 # Name Entety Recognition
 #*******************************************************
@@ -165,7 +178,7 @@ registerDoParallel(cl)
 
 t <- proc.time() # Inicia el cronómetro
 
-namesList <-foreach(i=1:1000,
+namesList <-foreach(i=1:100,
                     .combine=c, 
                     .packages = c("openNLP", "NLP", "tm", "base","rJava")) %dopar% 
                     {
