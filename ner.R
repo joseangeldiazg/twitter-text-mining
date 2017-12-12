@@ -90,6 +90,7 @@ removeFb <- function(x) gsub("fbme[^[:space:]]*", "", x)
 removeBitly <- function(x) gsub("bitly[^[:space:]]*", "", x)
 removeInstagram <- function(x) gsub("instagramcom[^[:space:]]*", "", x)
 removeVine <- function(x) gsub("vineco[^[:space:]]*", "", x)
+removeOwly <- function(x) gsub("owly[^[:space:]]*", "", x)
 
 myCorpus$content <- removeURL(myCorpus$content)
 myCorpus$content <- removePics(myCorpus$content)
@@ -101,6 +102,7 @@ myCorpus$content <- removeFb(myCorpus$content)
 myCorpus$content <- removeInstagram(myCorpus$content)
 myCorpus$content <- removeVine(myCorpus$content)
 myCorpus$content <- removeBitly(myCorpus$content)
+myCorpus$content <- removeOwly(myCorpus$content)
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
 
@@ -240,4 +242,3 @@ finalCorpus <- tm_map(finalCorpus, stripWhitespace)
 
 #Llegados a este punto solo tendremos tuits que hablan de personas
 
-finalCorpus$content

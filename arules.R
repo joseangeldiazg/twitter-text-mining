@@ -11,18 +11,27 @@
 items <- strsplit(as.character(finalCorpus$content), " ")
 transactions <- as(items, "transactions")
 
-help(apriori)
+#Itemsets Frecuentes
 
-itemsets <- apriori(transactions, parameter = list(sup = 0.0001, conf = 0.1, target="frequent itemsets",minlen=1))
+itemsets <- apriori(transactions, parameter = list(sup = 0.01, conf = 0.8, target="frequent itemsets",minlen=1))
 inspect(itemsets)
 
 
-rules <- apriori(transactions, parameter = list(sup = 0.0001, conf = 0.7, target="rules",minlen=1))
+#Reglas de asociación
+
+rules <- apriori(transactions, parameter = list(sup = 0.015, conf = 0.9, target="rules",minlen=1))
 inspect(rules)
 
+top.rules.confidence <- sort(rules, decreasing = TRUE, na.last = NA, by = "confidence")
+top.rules.support <- sort(rules, drecreasing= TRUE, na.last=NA, by="support")
 
-top.confidence <- sort(rules, decreasing = TRUE, na.last = NA, by = "confidence")
-inspect(head(top.confidence, 10))
+
+# Vamos a inspeccionar las reglas 
+
+top.rules.df<-data.frame(inspect(top.rules.support))
+
+
+# TODO: Ver que ocurre con e reglas e itemsets frecuentes del tipo {}
 
 
 #Apriori es muy lento, vamos a usar una aproximación por Spark para ver si funciona mejor
