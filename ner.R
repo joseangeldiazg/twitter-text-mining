@@ -127,11 +127,17 @@ which(myCorpus$content=="")
 
 # Vemnos que hay muchos vacios por lo que eliminaremos estos tuits del dataset
 
-myCorpus<-myCorpus[which(myCorpus$content!=" ")]
+
+#TODO: Siguen apareciendo los vacios comprobar que ocurre.
+
 myCorpus<-myCorpus[which(myCorpus$content!="")]
+myCorpus<-myCorpus[which(myCorpus$content!=" ")]
+myCorpus<-myCorpus[which(myCorpus$content!="  ")]
+myCorpus<-myCorpus[which(myCorpus$content!="   ")]
+
 
 #*******************************************************
-# Name Entety Recognition
+# Name Entity Recognition
 #*******************************************************
 
 #Declaramos una función para obtener los nombres
@@ -166,8 +172,31 @@ obtieneNombres<-function(tuit, i)
 }
 
 #*************************************
-#PROGRAMACIÓN PARALELA
+# ESCRITURA EN DISCO
 #*************************************
+
+
+# Escribimos el corpus en disco para recuperarlo en ejecución la sesión de RStudio del cluster
+
+# writeCorpus(myCorpus, path = "./data", filenames = paste(seq_along(myCorpus), ".txt", sep = ""))
+
+# Va muy lento escribiendo todos los caracteres por eso vamos a escribir en un fichero texto plano
+
+t <- proc.time() # Inicia el cronómetro
+
+fileConn<-file("./tuits.txt")
+
+write(myCorpus$content, file=fileConn, sep="\n", append=TRUE, ncolumns=1)
+
+close(fileConn)
+
+proc.time()-t    # Detiene el cronómetro
+
+#*************************************
+# PROGRAMACIÓN PARALELA
+#*************************************
+
+#A partir de aqui será ejecutado en el cluster ya que este proceso es muy lento
 
 namesList=list()
 
@@ -226,6 +255,13 @@ finalCorpus <- tm_map(finalCorpus, content_transformer(tolower))
 
 myStopwords <- c(setdiff(stopwords('english'), c("via")))
 finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
+
+
+#Comprobamos de nuevo los vacios ya que puede que al haber eliminado palabras vacias, nuevamente tengamos tuits vacios en el conjunto del dataset
+
+finalCorpus<-finalCorpus[which(finalCorpus$content!=" ")]
+finalCorpus<-finalCorpus[which(finalCorpus$content!="")]
+
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
 
