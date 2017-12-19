@@ -92,6 +92,18 @@ removeInstagram <- function(x) gsub("instagramcom[^[:space:]]*", "", x)
 removeVine <- function(x) gsub("vineco[^[:space:]]*", "", x)
 removeOwly <- function(x) gsub("owly[^[:space:]]*", "", x)
 
+removeURL2 <- function(x) gsub(" http[^[:space:]]*", "", x)
+removePics2 <- function(x) gsub(" pictwit[^[:space:]]*", "", x)
+removeSmartURL2 <- function(x) gsub(" smarturl[^[:space:]]*", "", x)
+removeTwitter2 <- function(x) gsub(" twittercom[^[:space:]]*", "", x)
+removeYoutube3 <- function(x) gsub(" youtubecom[^[:space:]]*", "", x)
+removeYoutube4 <- function(x) gsub(" youtube[^[:space:]]*", "", x)
+removeFb2 <- function(x) gsub(" fbme[^[:space:]]*", "", x)
+removeBitly2 <- function(x) gsub(" bitly[^[:space:]]*", "", x)
+removeInstagram2 <- function(x) gsub(" instagramcom[^[:space:]]*", "", x)
+removeVine2 <- function(x) gsub(" vineco[^[:space:]]*", "", x)
+removeOwly2 <- function(x) gsub(" owly[^[:space:]]*", "", x)
+
 myCorpus$content <- removeURL(myCorpus$content)
 myCorpus$content <- removePics(myCorpus$content)
 myCorpus$content <- removeSmartURL(myCorpus$content)
@@ -103,6 +115,19 @@ myCorpus$content <- removeInstagram(myCorpus$content)
 myCorpus$content <- removeVine(myCorpus$content)
 myCorpus$content <- removeBitly(myCorpus$content)
 myCorpus$content <- removeOwly(myCorpus$content)
+
+
+myCorpus$content <- removeURL2(myCorpus$content)
+myCorpus$content <- removePics2(myCorpus$content)
+myCorpus$content <- removeSmartURL2(myCorpus$content)
+myCorpus$content <- removeTwitter2(myCorpus$content)
+myCorpus$content <- removeYoutube3(myCorpus$content)
+myCorpus$content <- removeYoutube4(myCorpus$content)
+myCorpus$content <- removeFb2(myCorpus$content)
+myCorpus$content <- removeInstagram2(myCorpus$content)
+myCorpus$content <- removeVine2(myCorpus$content)
+myCorpus$content <- removeBitly2(myCorpus$content)
+myCorpus$content <- removeOwly2(myCorpus$content)
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
 
@@ -122,9 +147,12 @@ myCorpus <- tm_map(myCorpus, stripWhitespace)
 
 # El proceso NER dará errores si encontramos un tuit vacio, por lo tanto vamos a localizar estos tuits
 
-which(myCorpus$content==" ")
 which(myCorpus$content=="")
+which(myCorpus$content==" ")
+which(myCorpus$content=="  ")
+which(myCorpus$content=="   ")
 
+myCorpus[1812]$content
 # Vemnos que hay muchos vacios por lo que eliminaremos estos tuits del dataset
 
 
