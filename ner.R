@@ -246,13 +246,25 @@ stopCluster(cl)
 
 proc.time()-t    # Detiene el cronómetro
 
+
+#*************************************************
+#Lectura de datos desde el fichero creado en el cluster
+#*************************************************
+
+namesList<-scan("./data/entidades.txt", what="character", sep="\n")
+
+#Comprobamos que sean del mismo tamaño 
+
+length(namesList)
+length(myCorpus$content)
+
 #*************************************************
 #Limpiamos los tuits que no referencian a personas
 #*************************************************
 
 finalExample<-list()
 
-for(i in 1:10000)
+for(i in 1:length(namesList))
 {
   if(!(namesList[i]==i))
   {
@@ -285,10 +297,10 @@ myStopwords <- c(setdiff(stopwords('english'), c("via")))
 finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
 
-#Comprobamos de nuevo los vacios ya que puede que al haber eliminado palabras vacias, nuevamente tengamos tuits vacios en el conjunto del dataset
+# Comprobamos de nuevo los vacios ya que puede que al haber eliminado palabras vacias, nuevamente tengamos tuits vacios en el conjunto del dataset
 
-finalCorpus<-finalCorpus[which(finalCorpus$content!=" ")]
-finalCorpus<-finalCorpus[which(finalCorpus$content!="")]
+which(finalCorpus$content=" ")
+which(finalCorpus$content=="")
 
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
@@ -305,4 +317,3 @@ finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 finalCorpus <- tm_map(finalCorpus, stripWhitespace)
 
 #Llegados a este punto solo tendremos tuits que hablan de personas
-
