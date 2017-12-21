@@ -299,7 +299,7 @@ finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
 # Comprobamos de nuevo los vacios ya que puede que al haber eliminado palabras vacias, nuevamente tengamos tuits vacios en el conjunto del dataset
 
-which(finalCorpus$content=" ")
+which(finalCorpus$content==" ")
 which(finalCorpus$content=="")
 
 
