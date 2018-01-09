@@ -11,6 +11,8 @@ library(wordcloud)
 library(tm)
 library(slam)
 library(ggplot2)
+library(RWeka)
+library(reshape2)
 #****************************************************************************
 
 barplot(c(length(myCorpus$content),length(finalCorpus$content)))
@@ -64,7 +66,7 @@ maxFrequent<-findFreqTerms(tdm, 20)
 
 tdm.new<-tdm[maxFrequent,]
 
-#Tenemos 4379 terminos distintos, por lo que ahora podremos obtener nuestra matriz
+#Tenemos 7322 terminos distintos, por lo que ahora podremos obtener nuestra matriz
 
 m <- as.matrix(tdm.new)
 
@@ -87,7 +89,7 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 400, random.ord
 
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 500, random.order = F, colors = pal)
 
-# Parece que debido a nuestro proceso NER  hemos conseguido acotar la información a personas, y quitarnos información sobre marcas o lugares de enmedio. 
+# Parece que debido a nuestro proceso NER  hemos conseguido acotar la información a personas, y quitarnos información sobre marcas o lugares de en medio. 
 # Vamos a crear por otro lado, un histograma para ver la frecuencia de las palabras que más se usan en nuestro dataset.
 
 
@@ -102,9 +104,80 @@ ggplot(data=palabrasMasUsadas, aes(x=Palabra,y=Frecuencia)) +
 
 # Si usaramos el dataset completo el aumento de palabras y frecuencias harán del gráfico una mancha de la que dificilmente podrámos obtener información
 # relevante. Lo que si podemos concluir es que para las palabras con mucha frecuencia, usadas mas de 1700 veces, ya aparecen ciertos terminos interesantes 
-# como el buscado, Trump, o el apellido clinton.
+# como trump, clinton, drake... estos referencias a personas que probablemente fueron tendencia en estos meses.
 
-# Viendo las frecuencias de este gráfico podemos concluir tambien que tendremos que utilizar soportes muy bajos en nuestras reglas de asociación. 
+# Viendo las frecuencias de este gráfico podemos concluir también que tendremos que utilizar soportes muy bajos en nuestras reglas de asociación, ya que de
+# otro modo obtendremos pocos resultados o estos no serán apropiados. 
+
+# Dado que parece que encontramos datos y palabras relacionados entre si, usaremos un estudio de 2-gramas para comprobar que palabras aparecen juntas con 
+# más frecuencia.
 
 
+
+ngram_tokenizer <- function(n = 1L, skip_word_none = TRUE) {
+  stopifnot(is.numeric(n), is.finite(n), n > 0)
+  options <- stringi::stri_opts_brkiter(type="word", skip_word_none = skip_word_none)
+  
+  function(x) {
+    stopifnot(is.character(x))
+    
+    # Split into word tokens
+    tokens <- unlist(stringi::stri_split_boundaries(x, opts_brkiter=options))
+    len <- length(tokens)
+    
+    if(all(is.na(tokens)) || len < n) {
+      # If we didn't detect any words or number of tokens is less than n return empty vector
+      character(0)
+    } else {
+      sapply(
+        1:max(1, len - n + 1),
+        function(i) stringi::stri_join(tokens[i:min(len, i + n - 1)], collapse = "-")
+      )
+    }
+  }
+}
+
+bigramtokenizer<- ngram_tokenizer(2)
+trigramtokenizer <- ngram_tokenizer(3)
+
+bigramslist<-lapply(finalCorpus$content, bigramtokenizer)
+trigramlist <- lapply(finalCorpus$content, trigramtokenizer)
+
+
+#Creamos de nuevo el corpus con los bi y trigramas para estudiarlo. 
+
+bigramslist<-lapply(bigramslist, paste, sep="", collapse = " ")
+
+vs <- VectorSource(bigramslist)
+
+bigramCorpus<-VCorpus(vs, readerControl=list(readPlain, language="en", load=TRUE))
+
+trigramlist<-lapply(trigramlist, paste, sep="", collapse = " ")
+
+vs <- VectorSource(trigramlist)
+
+trigramCorpus<-VCorpus(vs, readerControl=list(readPlain, language="en", load=TRUE))
+
+rm(vs)
+
+#Obtenemos las frecuencias de los terminos dobles y triples
+
+dtm_bigram <- DocumentTermMatrix(bigramCorpus, control = list(tokenize = BigramTokenizer))
+
+inspect(dtm_bigram)
+
+tdm2 <- TermDocumentMatrix(bigramCorpus,control = list(wordLengths = c(1, Inf)))
+tdm3 <- TermDocumentMatrix(trigramCorpus,control = list(wordLengths = c(1, Inf)))
+
+
+maxFrequent2grams<-findFreqTerms(tdm2, 20)
+maxFrequent3grams<-findFreqTerms(tdm3, 20)
+
+tdm2.new<-tdm[maxFrequent2grams,]
+tdm3.new<-tdm[maxFrequent3grams,]
+
+
+#Tenemos 7322 terminos distintos, por lo que ahora podremos obtener nuestra matriz
+
+m <- as.matrix(tdm.new)
 

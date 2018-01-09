@@ -310,7 +310,7 @@ finalCorpus <- tm_map(finalCorpus, content_transformer(removeNumPunct))
 # Eliminamos stop words en ingles
 # Añadimos la palabra "via" ya que se usa para referenciar usuarios en tweeter
 
-myStopwords <- c(setdiff(stopwords('english'), c("via")))
+myStopwords <- c(stopwords('english'),c("via"))
 finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
 # Borramos los espacios extra
