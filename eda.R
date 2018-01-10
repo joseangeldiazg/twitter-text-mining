@@ -4,6 +4,7 @@
 #****************************************************************************
 
 #****************************************************************************
+
 #Librerias
 
 library(RColorBrewer)
@@ -13,6 +14,7 @@ library(slam)
 library(ggplot2)
 library(RWeka)
 library(reshape2)
+library(syuzhet)
 #****************************************************************************
 
 barplot(c(length(myCorpus$content),length(finalCorpus$content)))
@@ -123,20 +125,20 @@ bigramCorpus<-VCorpus(vs, readerControl=list(readPlain, language="en", load=TRUE
 
 rm(vs)
 
-bigram.twitterTdm <- TermDocumentMatrix(bigramCorpus, control = list(tokenize = BigramTokenizer))
+bigram.twitterTdm <- DocumentTermMatrix(bigramCorpus, control = list(tokenize = BigramTokenizer))
 
 #Obtenemos las frecuencias de los terminos dobles
 
-maxFrequent2grams<-findFreqTerms(bigram.twitterTdm, 30)
+maxFrequent2grams<-findFreqTerms(bigram.twitterTdm, 40)
 
-tdm2.new<-bigram.twitterTdm[maxFrequent2grams,]
+tdm2.new<-bigram.twitterTdm[,maxFrequent2grams]
 
 m2grams <- as.matrix(tdm2.new)
 
-#Realizamos un gráfico de las 10 bigrams más usados
+#Realizamos un gráfico de los 30 bigrams más usados
 
 wordcount <- colSums(m2grams)
-topten <- head(sort(wordcount, decreasing=TRUE), 15)
+topten <- head(sort(wordcount, decreasing=TRUE), 30)
 
 dfplot <- as.data.frame(melt(topten))
 dfplot$word <- dimnames(dfplot)[[1]]
@@ -144,7 +146,46 @@ dfplot$word <- factor(dfplot$word,
                       levels=dfplot$word[order(dfplot$value,
                                                decreasing=TRUE)])
 
-fig <- ggplot(dfplot, aes(x=word, y=value)) + geom_bar(stat="identity")
-fig <- fig + xlab("Two-grams in Corpus")
-fig <- fig + ylab("Count")
+fig <- ggplot(dfplot, aes(x=word, y=value)) + geom_bar(stat="identity") + coord_flip() 
+fig <- fig + xlab("Two-grams in Twitter Corpus")
+fig <- fig + ylab("Frecuencia")
 print(fig)
+
+
+#Puede resultar interesante obtener un estudio de los trigramas para ver que palabras se relacionan más con los personajes que parecen ir apareciendo
+
+
+TrigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
+
+trigram.twitterTdm <- DocumentTermMatrix(bigramCorpus, control = list(tokenize = TrigramTokenizer))
+
+#Obtenemos las frecuencias de los terminos dobles
+
+maxFrequent3grams<-findFreqTerms(trigram.twitterTdm, 40)
+
+tdm3.new<-trigram.twitterTdm[,maxFrequent3grams]
+
+m3grams <- as.matrix(tdm3.new)
+
+#Realizamos un gráfico de los 30 bigrams más usados
+
+wordcount <- colSums(m3grams)
+topten <- head(sort(wordcount, decreasing=TRUE), 40)
+
+dfplot <- as.data.frame(melt(topten))
+dfplot$word <- dimnames(dfplot)[[1]]
+dfplot$word <- factor(dfplot$word,
+                      levels=dfplot$word[order(dfplot$value,
+                                               decreasing=TRUE)])
+
+fig <- ggplot(dfplot, aes(x=word, y=value)) + geom_bar(stat="identity") + coord_flip() 
+fig <- fig + xlab("3-grams in Twitter Corpus")
+fig <- fig + ylab("Frecuencia")
+print(fig)
+
+
+# Los trigramas no parecen muy útiles ya que al tratarse de un problema en el que hemos obtenido datos de Twitter sin ningún filtro, estos están muy influenciados
+# por aplicaciones, como youtube y acciones propias de las redes sociales como añadir fotos, videos, dar like a estos... también podemos ver información 
+# relacionada con Michael Sippey, tras una búsqueda podemos concluir que esta persona fue alto cargo de Twitter pero en los meses en que hemos realizado el 
+# estudio abandono su puesto. 
+
