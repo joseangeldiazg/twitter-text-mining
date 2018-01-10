@@ -113,71 +113,38 @@ ggplot(data=palabrasMasUsadas, aes(x=Palabra,y=Frecuencia)) +
 # más frecuencia.
 
 
+BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
 
-ngram_tokenizer <- function(n = 1L, skip_word_none = TRUE) {
-  stopifnot(is.numeric(n), is.finite(n), n > 0)
-  options <- stringi::stri_opts_brkiter(type="word", skip_word_none = skip_word_none)
-  
-  function(x) {
-    stopifnot(is.character(x))
-    
-    # Split into word tokens
-    tokens <- unlist(stringi::stri_split_boundaries(x, opts_brkiter=options))
-    len <- length(tokens)
-    
-    if(all(is.na(tokens)) || len < n) {
-      # If we didn't detect any words or number of tokens is less than n return empty vector
-      character(0)
-    } else {
-      sapply(
-        1:max(1, len - n + 1),
-        function(i) stringi::stri_join(tokens[i:min(len, i + n - 1)], collapse = "-")
-      )
-    }
-  }
-}
+# Pasamos a VCORPUS nuestro corpus inicial ya que de otro mono no es posible utilizar el tokenizer de weka
 
-bigramtokenizer<- ngram_tokenizer(2)
-trigramtokenizer <- ngram_tokenizer(3)
-
-bigramslist<-lapply(finalCorpus$content, bigramtokenizer)
-trigramlist <- lapply(finalCorpus$content, trigramtokenizer)
-
-
-#Creamos de nuevo el corpus con los bi y trigramas para estudiarlo. 
-
-bigramslist<-lapply(bigramslist, paste, sep="", collapse = " ")
-
-vs <- VectorSource(bigramslist)
+vs <- VectorSource(finalCorpus$content)
 
 bigramCorpus<-VCorpus(vs, readerControl=list(readPlain, language="en", load=TRUE))
 
-trigramlist<-lapply(trigramlist, paste, sep="", collapse = " ")
-
-vs <- VectorSource(trigramlist)
-
-trigramCorpus<-VCorpus(vs, readerControl=list(readPlain, language="en", load=TRUE))
-
 rm(vs)
 
-#Obtenemos las frecuencias de los terminos dobles y triples
+bigram.twitterTdm <- TermDocumentMatrix(bigramCorpus, control = list(tokenize = BigramTokenizer))
 
-dtm_bigram <- DocumentTermMatrix(bigramCorpus, control = list(tokenize = BigramTokenizer))
+#Obtenemos las frecuencias de los terminos dobles
 
-inspect(dtm_bigram)
+maxFrequent2grams<-findFreqTerms(bigram.twitterTdm, 30)
 
-tdm2 <- TermDocumentMatrix(bigramCorpus,control = list(wordLengths = c(1, Inf)))
-tdm3 <- TermDocumentMatrix(trigramCorpus,control = list(wordLengths = c(1, Inf)))
+tdm2.new<-bigram.twitterTdm[maxFrequent2grams,]
 
+m2grams <- as.matrix(tdm2.new)
 
-maxFrequent2grams<-findFreqTerms(tdm2, 20)
-maxFrequent3grams<-findFreqTerms(tdm3, 20)
+#Realizamos un gráfico de las 10 bigrams más usados
 
-tdm2.new<-tdm[maxFrequent2grams,]
-tdm3.new<-tdm[maxFrequent3grams,]
+wordcount <- colSums(m2grams)
+topten <- head(sort(wordcount, decreasing=TRUE), 15)
 
+dfplot <- as.data.frame(melt(topten))
+dfplot$word <- dimnames(dfplot)[[1]]
+dfplot$word <- factor(dfplot$word,
+                      levels=dfplot$word[order(dfplot$value,
+                                               decreasing=TRUE)])
 
-#Tenemos 7322 terminos distintos, por lo que ahora podremos obtener nuestra matriz
-
-m <- as.matrix(tdm.new)
-
+fig <- ggplot(dfplot, aes(x=word, y=value)) + geom_bar(stat="identity")
+fig <- fig + xlab("Two-grams in Corpus")
+fig <- fig + ylab("Count")
+print(fig)
