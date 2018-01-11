@@ -2,6 +2,10 @@
 #REGLAS DE ASOCIACION
 #*************************************************
 
+library(arules)
+library(ggplot2)
+library (arulesViz)
+
 #Vamos a probar primero con Apriori, ya que es exahustivo
 
 #*************************************************
@@ -9,89 +13,138 @@
 #*************************************************
 
 items <- strsplit(as.character(finalCorpus$content), " ")
+
+# En nuestro proceso de EDA hemos visto que ibamos a tener nombres propios compuestos interesantes. Uniremos los más conocidos para evitar en suciar el proceso.
+# con reglas del tipo Justin => Bieber, Donald => Trump
+
+fusion <- function(vector,nombre1,nombre2)
+  {
+    vector<-vector[vector!=""]
+    final<-length(vector)-1
+    if(length(vector)>1)
+    {
+        for(i in 1:final)
+        {
+          if(vector[i]==nombre1 && vector[i+1]==nombre2)
+          {
+            nombre<-paste(nombre1, nombre2, sep="-")
+            vector[i]<-nombre
+            vector[i+1]<-"borrar"
+          }
+        }
+    }
+    vector<-vector[vector!="borrar"]
+    return(vector)
+  }
+
+
+for(i in 1:length(items))
+{
+  items[[i]]<-fusion(items[[i]], "ben", "simmons")
+  items[[i]]<-fusion(items[[i]], "donald", "trump")
+  items[[i]]<-fusion(items[[i]], "hillary", "clinton")
+  items[[i]]<-fusion(items[[i]], "bill", "clinton")
+  items[[i]]<-fusion(items[[i]], "barack", "obama")
+  items[[i]]<-fusion(items[[i]], "justin", "bieber")
+  items[[i]]<-fusion(items[[i]], "bernie", "sanders")
+  items[[i]]<-fusion(items[[i]], "ted", "cruz")
+  print(i)
+}
+
+
 transactions <- as(items, "transactions")
 
+#*************************************************
 #Itemsets Frecuentes
+#*************************************************
 
-itemsets <- apriori(transactions, parameter = list(sup = 0.01, conf = 0.8, target="frequent itemsets",minlen=1))
-inspect(itemsets)
+# Fijaremos el valor de soporte en 0.0001, en base al proceso de EDA, este es un valor aceptable ya que indicará que casi el 1% por ciento de Twitter como minimo 
+# constata algo, teniendo en cuenta que podremos considerar la muestra como aleatoria y que los 14 tuits que relacionen terminos en concreto sobre la muestra de
+# 140000 tuits, podrá extrapolarse a una gran tendencia si lo llevamos al resto de tuiter, más, teniendo en cuenta que los temas de los que se podría hablar 
+# son infinitos. 
 
 
+itemsets <- apriori(transactions, parameter = list(sup = 0.0005, target="frequent itemsets",minlen=1))
+itemsets <- sort(itemsets, by="support")
+inspect(head(itemsets,50))
+
+# Creamos ahora un gráfico para ver la distribución del número de items en los itemsetsfrecuentes
+
+barplot(table(size(itemsets)), xlab="item size", ylab="count")
+
+
+# Vemos una explosión e los itemsets a partir de 4, por lo que vamos a explorar los itemsets por encima y debajo de este rango. 
+
+inspect(itemsets[size(itemsets)==1])
+inspect(itemsets[size(itemsets)==2])
+inspect(itemsets[size(itemsets)==3])
+inspect(itemsets[size(itemsets)==4])
+
+
+inspect(itemsets[size(itemsets)==7])
+inspect(itemsets[size(itemsets)==8])
+inspect(itemsets[size(itemsets)==9])
+inspect(itemsets[size(itemsets)==10])
+
+#Vamos a realizar un estudio  de los itemsets maximales. 
+
+maximalItemsets <- itemsets[is.maximal(itemsets)]
+maximalItemsets <- sort(maximalItemsets, by="support")
+
+# Volvemos a dibujar el gráfico
+
+barplot(table(size(maximalItemsets)), xlab="item size", ylab="count")
+
+# Por último obtendremos los itemsets cerrados para obtener un gráfico con una comparativa entre ambos.
+
+closedItemsets <- itemsets[is.closed(itemsets)]
+closedItemsets <- sort(closedItemsets, by="support")
+
+
+# Ahora podemos ver cuantos itemsets, frecuentes cerrados y maximales tenemos.
+
+barplot( c(frequent=length(itemsets), closed=length(closedItemsets), maximal=length(maximalItemsets)), ylab="count", xlab="itemsets")
+
+
+#*************************************************
 #Reglas de asociación
+#*************************************************
 
-rules <- apriori(transactions, parameter = list(sup = 0.015, conf = 0.9, target="rules",minlen=1))
-inspect(rules)
+rules <- apriori(transactions, parameter = list(sup = 0.0001, conf = 0.7, target="rules", minlen=2))
+rules
+
+# Tenemos casi 3M de reglas de asociación
+
+# Vemos un resumen de parámetros de confianza de las reglas. 
+
+summary(rules)
+
+# Vamos a inspeccionarlas por sus valores de soporte y confianza
 
 top.rules.confidence <- sort(rules, decreasing = TRUE, na.last = NA, by = "confidence")
 top.rules.support <- sort(rules, drecreasing= TRUE, na.last=NA, by="support")
 
+inspect(head(top.rules.confidence,100))
 
-# Vamos a inspeccionar las reglas 
+inspect(head(top.rules.support,100))
 
-top.rules.df<-data.frame(inspect(top.rules.support))
-
-
-# TODO: Ver que ocurre con e reglas e itemsets frecuentes del tipo {}
+# Vamos a inspeccionar las reglas sobre algunos nombres propios interesantes que hemos podido ver en nuestro proceso de EDA
 
 
-#Apriori es muy lento, vamos a usar una aproximación por Spark para ver si funciona mejor
+# Trump
 
+rulesFilterTrump <- subset(rules, subset = lhs %in% "donald-trump")
+rulesFilterTrump <- sort(rulesFilterTrump, by="support")
 
-#*************************************************
-# FP-GROWTH - SPARK FRAMEWORK
-#*************************************************
+inspect(head(rulesFilterTrump, 200))
 
+# Hillary Clinton
 
-#Iniciamos sesión en Spark
+rulesFilterHC <- subset(rules, subset = lhs %in% "hillary-clinton")
+rulesFilterHC <- sort(rulesFilterHC, by="support")
 
-if (nchar(Sys.getenv("SPARK_HOME")) < 1) {
-  Sys.setenv(SPARK_HOME = "/Users/joseadiazg/spark-2.2.0-bin-hadoop2.7")
-}
+inspect(head(rulesFilterHC, 200))
 
-library(SparkR, lib.loc = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib")))
-sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "7g"))
+# Vamos a intentar crear algun gráfico  para visualizar estos conjuntos de reglas. 
 
-
-#Creamos un dataset para que FP-GROWTH pueda entenderlo
-
-#No podemos tener items repetidos en una transaccion, por lo que haremos una nueva versión
-
-
-items <- strsplit(as.character(finalCorpus$content), " ")
-
-reduce_row = function(i) {
-  split = strsplit(i, split=" ")
-  paste(unique(split[[1]]), collapse = " ") 
-}
-
-itemsUnique<-lapply(finalCorpus$content[1:length(finalCorpus$content)],reduce_row)
-
-listUnique<-strsplit(as.character(itemsUnique[1:855]), split=" ")
-
-#Ya tenemos items únicos, ahora los pasamos a lista de elementos
-
-lapply(listUnique, write, "test.txt", append=TRUE, ncolumns=1000)
-
-
-#Vamos a crear el tipo de datos para Spark Fp-Growth
-
-raw_data <- read.df(
-  "./test.txt",
-  source = "csv",
-  schema = structType(structField("raw_items", "string")))
-
-data <- selectExpr(raw_data, "split(raw_items, ' ') as items")
-
-fpm <- spark.fpGrowth(data, itemsCol="items", minSupport=0.001, minConfidence=0.6)
-
-# Extracting frequent itemsets
-
-frequent_itemsets<-spark.freqItemsets(fpm)
-showDF(frequent_itemsets)
-
-# Extracting association rules
-
-association_rules <- spark.associationRules(fpm)
-showDF(association_rules)
-
-
+plot(rulesPruned[1:6], method="graph")
