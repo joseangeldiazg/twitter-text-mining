@@ -69,8 +69,7 @@ plot.new()
 text(x=0.5, y=0.5, 'Emotion Comparison Word Cloud')
 comparison.cloud(stdm, random.order=FALSE,
                  colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
-                 title.size=1.5, max.words=400)
-
+                 title.size=1.5, max.words=4000)
 
 # Con el gráfico queda bastante más claro los datos con los que estamos trabajando y como se han polarizado los sentimientos. Vemos que trump, suscita 
 # sorpresa y que es la palabra mas usada dentro de esta categoria. El sentimiento anticipacion parece focalizarse en tiempos, y momentos temporales. 
