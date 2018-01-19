@@ -7,6 +7,7 @@
 
 
 #Obtenemos los sentimientos
+
 d<-get_nrc_sentiment(finalCorpus$content)
 
 
@@ -24,11 +25,13 @@ td_new2<-td_new[1:8,]
 qplot(sentiment, data=td_new2, weight=count, geom="bar",fill=sentiment)+ggtitle("Twitter sentiments")
 
 # Parece que tenemos un número muy elevado de tuits que hablan veracidad o afirmaciones. Esto es normal ya que en twitter mucha gente afrima hechos o noticias por lo
-# que era de esperar que este sentimiento fuera el mayoritario. Vemos que la diversión o el agrado tiene también una gran representación, junto con la anticipacion, 
-# este último debe ser analizado para ver que términos se asocian con anticipación, ya que es ambiguo. El resto de los sentimientos están más o menos equilibrados.
-
+# que era de esperar que este sentimiento fuera el mayoritario. Vemos que la diversión o el agrado tiene también una gran representación, junto con la anticipación, 
+# este último debe ser analizado para ver que términos se asocian con anticipación, ya que de primeras parece ambiguo. El resto de los sentimientos están equilibrados.
 
 # Con el fin de ahondar que palabras se asocian con que sentimientos vamos a usar los colores del anterior gráfico sobre una nube de palabras
+
+
+#Pegamos en una variable todas las palabras relacionadas con cada uno de los sentimientos
 
 all = c(
   paste(finalCorpus$content[d$anger > 0], collapse=" "),
@@ -65,9 +68,9 @@ comparison.cloud(stdm, random.order=FALSE,
                  title.size=1.5, max.words=3000)
 
 # Con el gráfico queda bastante más claro los datos con los que estamos trabajando y como se han polarizado los sentimientos. Vemos que trump, suscita 
-# sorpresa y que es la palabra mas usada dentro de esta categoria. El sentimiento anticipacion parece focalizarse en tiempos, y momentos temporales. 
+# sorpresa y que es la palabra más usada dentro de esta categoría. El sentimiento anticipación parece focalizarse en tiempos, y momentos temporales. 
 
-# Vemos que al gente está enfadada con los politicos, por los asesinatos o la pirateria entre otros casos. 
+# Vemos que al gente está enfadada con los políticos, por los asesinatos o la piratería entre otros casos. 
 
-# Un sentimiento muy interesante es el miedo, donde vemos un claro ejemplo de la sociedad americana. Vemos que la policia o el ejercito suscitan miedo, pero tambien 
+# Un sentimiento muy interesante es el miedo, donde vemos un claro ejemplo de la sociedad americana. Vemos que la policia o el ejercito suscitan miedo, pero también 
 # aparece la palabra transgenero, bien sabido es la homofobia del pais que tenemos entre manos, por lo que parece que nuestro proceso ha funcionado bastante bien. 

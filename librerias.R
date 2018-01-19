@@ -2,7 +2,7 @@
 #*******************************LIBRERIAS************************************
 #****************************************************************************
 
-# En este script se cargan todas las librerias necesarias para la ejecución de los demás scripts. 
+# En este script se cargan todas las librerías necesarias para la ejecución de los demás scripts. 
 # Ejecutarlo 1 vez antes de comenzar a trabajar con el código 
 
 install.packages("openNLPmodels.en",repos = "http://datacube.wu.ac.at/",type = "source")

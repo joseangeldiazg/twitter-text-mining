@@ -2,8 +2,12 @@
 # Análisis exploratorio de los datos
 #****************************************************************************
 
-barplot(c(length(myCorpus$content),length(finalCorpus$content)))
+#Este script sigue optiminzando los gráficos por medio de obtencion relevante por parte de gráficos
+
+
 #Vemos que la proporción de tuits que referencia a personas segun nuestro proceso de NER  es bastante reducida frente al conjunto del dataset
+
+barplot(c(length(myCorpus$content),length(finalCorpus$content)))
 
 #Concretamente el % de tuits que referencia a entidades de tipo persona son:
 
@@ -11,9 +15,9 @@ barplot(c(length(myCorpus$content),length(finalCorpus$content)))
 
 #8,3024
 
-#****************************************
+#****************************************************************************
 # Obtenemos la matriz de frecuencias
-#****************************************
+#****************************************************************************
 
 # Vamos a obtener la matriz de frecuencias de todo el contenido pero antes, para evitar problemas quizá podamos eliminar ciertas palababras raras
 # o largas que en nuestro proceso tendrán poca imporancia, sin olvidarnos que venimos de Twitter y que aunque hemos limpiado los datos, tendremos algunas
@@ -40,29 +44,28 @@ barplot(terms)
 
 # Podemos ver como si cortamos el rango de palabras en las que tienen un tamaño entre 1 y 10 quizá estemos perdiendo contenido relevante, ya que 
 # bajamos mucho en la variedad de términos. Por encima de 15 no es ncesario coger ya que la variedad es poca y probablemente seán errores, por lo
-# que el número optimo lo situaremos en el rango de 1-13
+# que el número óptimo lo situaremos en el rango de 1-13
 
 tdm <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, 13)))
 
 
-# Dado que el estudio se basa en reglas de asociacion, dificilmente encontraremos alguna regla útil en palabras con frecuencias por debajo de 20,
-# ya que usaremos valores de soporte aceptables, por ello, eliminaremos los terminos poco frecuentes, es decir, nos quedaremos con valores de frecuencia 
+# Dado que el estudio se basa en reglas de asociación, dificilmente encontraremos alguna regla útil en palabras con frecuencias por debajo de 20,
+# ya que usaremos valores de soporte aceptables, por ello, eliminaremos los términos poco frecuentes, es decir, nos quedaremos con valores de frecuencia 
 # mayores o iguales a 20
 
 maxFrequent<-findFreqTerms(tdm, 20)
 
 tdm.new<-tdm[maxFrequent,]
 
-#Tenemos 7322 terminos distintos, por lo que ahora podremos obtener nuestra matriz
+#Tenemos 7322 terminos distintos, por lo que ahora podremos obtener nuestra matriz y mantener la misma en memoria
 
 m <- as.matrix(tdm.new)
 
-#***************************************
+#****************************************************************************
 # Graficos de la matriz en nube de terminos
-#***************************************
+#****************************************************************************
 
-#Con la nube de terminos podemos hacernos una idea de que se hablaba
-#en Twitter durante estos meses.
+#Con la nube de terminos podemos hacernos una idea de que se hablaba en Twitter durante estos meses.
 
 word.freq <- sort(rowSums(m), decreasing = T)
 pal <- brewer.pal(9, "BuGn")[-(1:4)]
@@ -77,7 +80,15 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 400, random.ord
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 500, random.order = F, colors = pal)
 
 # Parece que debido a nuestro proceso NER  hemos conseguido acotar la información a personas, y quitarnos información sobre marcas o lugares de en medio. 
-# Vamos a crear por otro lado, un histograma para ver la frecuencia de las palabras que más se usan en nuestro dataset.
+# Igualmente vemos como empiezan a aparecer personas interesantes en el proceso por lo que parece que nuestro modelo empieza a obtener información relevante.
+
+
+
+#****************************************************************************
+# Histogramas
+#****************************************************************************
+
+# Vamos a crearun histograma para ver la frecuencia de las palabras que más se usan en nuestro dataset.
 
 
 palabrasMasUsadas<-data.frame(cbind(names(word.freq[word.freq>1700]),word.freq[word.freq>1700]))
@@ -90,7 +101,7 @@ ggplot(data=palabrasMasUsadas, aes(x=Palabra,y=Frecuencia)) +
       coord_flip() 
 
 # Si usaramos el dataset completo el aumento de palabras y frecuencias harán del gráfico una mancha de la que dificilmente podrámos obtener información
-# relevante. Lo que si podemos concluir es que para las palabras con mucha frecuencia, usadas mas de 1700 veces, ya aparecen ciertos terminos interesantes 
+# relevante. Lo que si podemos concluir es que para las palabras con mucha frecuencia, usadas más de 1700 veces, ya aparecen ciertos términos interesantes 
 # como trump, clinton, drake... estos referencias a personas que probablemente fueron tendencia en estos meses.
 
 # Viendo las frecuencias de este gráfico podemos concluir también que tendremos que utilizar soportes muy bajos en nuestras reglas de asociación, ya que de
@@ -100,9 +111,14 @@ ggplot(data=palabrasMasUsadas, aes(x=Palabra,y=Frecuencia)) +
 # más frecuencia.
 
 
+#****************************************************************************
+# N-Gramas
+#****************************************************************************
+
+
 BigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
 
-# Pasamos a VCORPUS nuestro corpus inicial ya que de otro mono no es posible utilizar el tokenizer de weka
+# Pasamos a VCORPUS nuestro corpus inicial ya que de otro modo no es posible utilizar el tokenizer de weka
 
 vs <- VectorSource(finalCorpus$content)
 
@@ -112,7 +128,7 @@ rm(vs)
 
 bigram.twitterTdm <- DocumentTermMatrix(bigramCorpus, control = list(tokenize = BigramTokenizer))
 
-#Obtenemos las frecuencias de los terminos dobles
+#Obtenemos las frecuencias de los términos dobles
 
 maxFrequent2grams<-findFreqTerms(bigram.twitterTdm, 40)
 
@@ -172,5 +188,5 @@ print(fig)
 # Los trigramas no parecen muy útiles ya que al tratarse de un problema en el que hemos obtenido datos de Twitter sin ningún filtro, estos están muy influenciados
 # por aplicaciones, como youtube y acciones propias de las redes sociales como añadir fotos, videos, dar like a estos... también podemos ver información 
 # relacionada con Michael Sippey, tras una búsqueda podemos concluir que esta persona fue alto cargo de Twitter pero en los meses en que hemos realizado el 
-# estudio abandono su puesto. 
+# estudio abandonó su puesto. 
 

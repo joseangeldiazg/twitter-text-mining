@@ -1,5 +1,5 @@
 #*************************************************
-#REGLAS DE ASOCIACION
+# REGLAS DE ASOCIACIÓN
 #*************************************************
 
 #Vamos a probar primero con Apriori, ya que es exahustivo
