@@ -2,13 +2,6 @@
 # Análisis de sentiminetos
 #****************************************************************************
 
-#Librerias
-
-library(syuzhet)
-library(tm)
-
-#****************************************************************************
-
 # Por último dado que vamos a intentar polarizar las reglas de asociación acorde a sentimientos vamos a realizar un gráfico de sentimientos básico
 # para hacernos una idea de que estamos tratando y qué tenemos entre manos. 
 
@@ -30,9 +23,9 @@ rownames(td_new) <- NULL
 td_new2<-td_new[1:8,]
 qplot(sentiment, data=td_new2, weight=count, geom="bar",fill=sentiment)+ggtitle("Twitter sentiments")
 
-# Parece que tenemos un número muy elevado de tuits que hablan veracidad o afirmaciones. Esto es normal ya que en twitter mucha gente de echos o noticias por lo
+# Parece que tenemos un número muy elevado de tuits que hablan veracidad o afirmaciones. Esto es normal ya que en twitter mucha gente afrima hechos o noticias por lo
 # que era de esperar que este sentimiento fuera el mayoritario. Vemos que la diversión o el agrado tiene también una gran representación, junto con la anticipacion, 
-# este último debe ser analizado para ver que términos se asocian con anticipación, ya que es ambiguo. El resto de los sentimientos están mas o menos equilibrados.
+# este último debe ser analizado para ver que términos se asocian con anticipación, ya que es ambiguo. El resto de los sentimientos están más o menos equilibrados.
 
 
 # Con el fin de ahondar que palabras se asocian con que sentimientos vamos a usar los colores del anterior gráfico sobre una nube de palabras
@@ -69,7 +62,7 @@ plot.new()
 text(x=0.5, y=0.5, 'Emotion Comparison Word Cloud')
 comparison.cloud(stdm, random.order=FALSE,
                  colors = c("#00B2FF", "red", "#FF0099", "#6600CC", "green", "orange", "blue", "brown"),
-                 title.size=1.5, max.words=4000)
+                 title.size=1.5, max.words=3000)
 
 # Con el gráfico queda bastante más claro los datos con los que estamos trabajando y como se han polarizado los sentimientos. Vemos que trump, suscita 
 # sorpresa y que es la palabra mas usada dentro de esta categoria. El sentimiento anticipacion parece focalizarse en tiempos, y momentos temporales. 

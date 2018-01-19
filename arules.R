@@ -2,10 +2,6 @@
 #REGLAS DE ASOCIACION
 #*************************************************
 
-library(arules)
-library(ggplot2)
-library (arulesViz)
-
 #Vamos a probar primero con Apriori, ya que es exahustivo
 
 #*************************************************

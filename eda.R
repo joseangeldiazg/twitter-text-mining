@@ -1,20 +1,5 @@
-
 #****************************************************************************
 # Análisis exploratorio de los datos
-#****************************************************************************
-
-#****************************************************************************
-
-#Librerias
-
-library(RColorBrewer)
-library(wordcloud)
-library(tm)
-library(slam)
-library(ggplot2)
-library(RWeka)
-library(reshape2)
-library(syuzhet)
 #****************************************************************************
 
 barplot(c(length(myCorpus$content),length(finalCorpus$content)))

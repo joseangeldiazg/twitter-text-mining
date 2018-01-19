@@ -1,12 +1,14 @@
-# Name Entity Recognition on R
+#**********************************************************
+# Name Entity Recognition on R - CLUSTER
+#**********************************************************
 
-# Subimos los datos desde local y ejecutaremos las funciones del proceso NER, una vez obtenidos los datos, no será
-# necesaria tanta capacidad de computo por lo que podremos volver a trabajar en local con los datos. 
+# Este script ha sido elaborado para su ejecución en el cluster.
+# Subimos los datos desde local y ejecutaremos las funciones del proceso NER
 
-
-#*********************************
+#**********************************************************
 # Cargamos librerias
-#*********************************
+#**********************************************************
+
 library(NLP)
 library(openNLP)
 library(magrittr)
@@ -17,7 +19,7 @@ library(devtools)
 install.packages("openNLPmodels.en", repos = "http://datacube.wu.ac.at/", type = "source")
 
 #*******************************************************
-# CONFIGURACIÓN DE JAVA
+# Configuración de Java
 #*******************************************************
 
 jgc <- function()
@@ -27,10 +29,10 @@ jgc <- function()
 
 
 #*******************************************************
-#Lectura de datos
+# Lectura de datos
 #*******************************************************
 
-#Hemos cargado en local los datos a un txt, ahora tenemos que leer las lineas en un vector para la funcion obtiene nombres
+#Hemos cargado en local los datos a un txt, ahora tenemos que leer las líneas en un vector para la función obtiene nombres
 
 datos<-scan("tuits.txt", what="character", sep="\n")
 

@@ -1,31 +1,12 @@
 #**********************************************************
-#Instalación de los paquetes necesarios
+#Carga y pre-procesado de datos
 #**********************************************************
-install.packages(c("NLP", "openNLP", "RWeka", "qdap","devtools","dplyr"))
-install.packages(c("SnowballC", "tm", "RColorBrewer", "wordcloud"  ))
-install.packages("openNLPmodels.en",
-                 repos = "http://datacube.wu.ac.at/",
-                 type = "source")
-install.packages("doParallel")
 
-#*********************************
-# Cargamos librerias
-#*********************************
-library(tm)
-library(RColorBrewer)
-library(wordcloud)
-library(NLP)
-library(openNLP)
-library(magrittr)
-library(foreach)
-library(doParallel)
-library(rJava)
-library(arules)
-library(plyr)
+#En este script se realiza la carga de datos en un Corpus y se realiza el pre-procesado de los mismos. 
 
-#*********************************
+#**********************************************************
 # Opciones
-#*********************************
+#**********************************************************
 
 options(java.parameters = "-Xmx8000m")
 
@@ -61,7 +42,7 @@ head(filter(tweets, tweets$is_retweet==FALSE))
 
 filterdf<-filter(tweets, tweets$is_retweet==FALSE)
 
-#Traemos los datos de la sesion Spark a una sesión en local
+#Traemos los datos de la sesión Spark a una sesión en local
 
 localdf<-collect(tweets)
 
@@ -104,6 +85,7 @@ removeInstagram2 <- function(x) gsub(" instagramcom[^[:space:]]*", "", x)
 removeVine2 <- function(x) gsub(" vineco[^[:space:]]*", "", x)
 removeOwly2 <- function(x) gsub(" owly[^[:space:]]*", "", x)
 
+
 myCorpus$content <- removeURL(myCorpus$content)
 myCorpus$content <- removePics(myCorpus$content)
 myCorpus$content <- removeSmartURL(myCorpus$content)
@@ -129,14 +111,14 @@ myCorpus$content <- removeVine2(myCorpus$content)
 myCorpus$content <- removeBitly2(myCorpus$content)
 myCorpus$content <- removeOwly2(myCorpus$content)
 
-# Borramos caracteres raros tales como emojis o caracteres no alfabéticos
+#Borramos caracteres raros tales como emojis o caracteres no alfabéticos
 
 removeNumPunct <- function(x) gsub("[^[:alpha:][:space:]]*", "", x) 
 myCorpus <- tm_map(myCorpus, content_transformer(removeNumPunct))
 
-# Eliminamos stop words en inglés
+#Eliminamos stop words en inglés
 
-# Añadimos la palabra "via" ya que se usa para referenciar usuarios en twitter
+#Añadimos la palabra "via" ya que se usa para referenciar usuarios en twitter
 
 myStopwords <- c(setdiff(stopwords('english'), c("via")))
 myCorpus <- tm_map(myCorpus, removeWords, myStopwords)
@@ -145,18 +127,14 @@ myCorpus <- tm_map(myCorpus, removeWords, myStopwords)
 
 myCorpus <- tm_map(myCorpus, stripWhitespace)
 
-# El proceso NER dará errores si encontramos un tuit vacio, por lo tanto vamos a localizar estos tuits
+# Localizamos posibles valores perdidos que se hayan generado tras el proceso de limpieza
 
 which(myCorpus$content=="")
 which(myCorpus$content==" ")
 which(myCorpus$content=="  ")
 which(myCorpus$content=="   ")
 
-myCorpus[1812]$content
 # Vemnos que hay muchos vacios por lo que eliminaremos estos tuits del dataset
-
-
-#TODO: Siguen apareciendo los vacios comprobar que ocurre.
 
 myCorpus<-myCorpus[which(myCorpus$content!="")]
 myCorpus<-myCorpus[which(myCorpus$content!=" ")]
@@ -165,7 +143,7 @@ myCorpus<-myCorpus[which(myCorpus$content!="   ")]
 
 
 #*******************************************************
-# Name Entity Recognition
+# Selección de instancias: Name Entity Recognition
 #*******************************************************
 
 #Declaramos una función para obtener los nombres
@@ -204,7 +182,7 @@ obtieneNombres<-function(tuit, i)
 #*************************************
 
 
-# Escribimos el corpus en disco para recuperarlo en ejecución la sesión de RStudio del cluster
+# Escribimos el corpus en disco para recuperarlo en la sesión de RStudio del cluster
 
 # writeCorpus(myCorpus, path = "./data", filenames = paste(seq_along(myCorpus), ".txt", sep = ""))
 
@@ -220,11 +198,11 @@ close(fileConn)
 
 proc.time()-t    # Detiene el cronómetro
 
-#*************************************
+#*******************************************************
 # PROGRAMACIÓN PARALELA
-#*************************************
+#*******************************************************
 
-#A partir de aqui será ejecutado en el cluster ya que este proceso es muy lento
+#A partir de aquí será ejecutado en el cluster ya que este proceso es muy lento
 
 namesList=list()
 
@@ -234,7 +212,7 @@ registerDoParallel(cl)
 
 t <- proc.time() # Inicia el cronómetro
 
-namesList <-foreach(i=1:1000,
+namesList <-foreach(i=1:length(myCorpus),
                     .combine=c, 
                     .packages = c("openNLP", "NLP", "tm", "base","rJava")) %dopar% 
                     {
@@ -247,9 +225,10 @@ stopCluster(cl)
 proc.time()-t    # Detiene el cronómetro
 
 
-#*************************************************
+#*******************************************************
 #Lectura de datos desde el fichero creado en el cluster
-#*************************************************
+#*******************************************************
+
 
 namesList<-scan("./data/entidades.txt", what="character", sep="\n")
 
@@ -258,9 +237,9 @@ namesList<-scan("./data/entidades.txt", what="character", sep="\n")
 length(namesList)
 length(myCorpus$content)
 
-#*************************************************
+#*******************************************************
 #Limpiamos los tuits que no referencian a personas
-#*************************************************
+#*******************************************************
 
 finalExample<-list()
 
@@ -272,22 +251,21 @@ for(i in 1:length(namesList))
   }
 }
 
-#**************************************************
-# Creamos un nuevo corpus para aplicar Text Mining
-# sobre los tuits que hablan sobre personas.
-#**************************************************
+#Creamos un nuevo corpus para aplicar Text Mining sobre los tuits que hablan sobre personas.
 
 finalCorpus <- Corpus(VectorSource(finalExample))
 rm(finalExample)
+
+
 #**************************************************
-# Limpiamos de nuevo los datos
+# Segunda ronda de limpieza
 #**************************************************
 
 # Hacemos una copia
 
 finalCorpusCopy<-finalCorpus
 
-# Pasamos a minuscula ya que antes no lo habiamos hecho para mejorar el proceso de NER
+# Pasamos a minuscula ya que antes no lo habíamos hecho para mejorar el proceso de NER
 
 finalCorpus <- tm_map(finalCorpus, content_transformer(tolower))
 
@@ -296,12 +274,10 @@ finalCorpus <- tm_map(finalCorpus, content_transformer(tolower))
 myStopwords <- c(setdiff(stopwords('english'), c("via")))
 finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
-
 # Comprobamos de nuevo los vacios ya que puede que al haber eliminado palabras vacias, nuevamente tengamos tuits vacios en el conjunto del dataset
 
 which(finalCorpus$content==" ")
 which(finalCorpus$content=="")
-
 
 # Borramos caracteres raros tales como emojis o caracteres no alfabéticos
 
@@ -314,6 +290,7 @@ myStopwords <- c(stopwords('english'),c("via"))
 finalCorpus <- tm_map(finalCorpus, removeWords, myStopwords)
 
 # Borramos los espacios extra
+
 finalCorpus <- tm_map(finalCorpus, stripWhitespace)
 
-#Llegados a este punto solo tendremos tuits que hablan de personas
+#Llegados a este punto solo tendremos tuits limpios que hablan de personas
