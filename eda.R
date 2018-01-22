@@ -2,9 +2,6 @@
 # Análisis exploratorio de los datos
 #****************************************************************************
 
-#Este script sigue optiminzando los gráficos por medio de obtencion relevante por parte de gráficos
-
-
 #Vemos que la proporción de tuits que referencia a personas segun nuestro proceso de NER  es bastante reducida frente al conjunto del dataset
 
 barplot(c(length(myCorpus$content),length(finalCorpus$content)))

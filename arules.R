@@ -1,14 +1,15 @@
-#*************************************************
+#**********************************************************
 # REGLAS DE ASOCIACIÓN
-#*************************************************
+#**********************************************************
 
-#Vamos a probar primero con Apriori, ya que es exahustivo
-
-#*************************************************
+#**********************************************************
 #Creamos las transacciones para las reglas de asociación
-#*************************************************
+#**********************************************************
+
+# Marco Formal: Los Items serán las Palabras y las Transacciones los Tuits
 
 items <- strsplit(as.character(finalCorpus$content), " ")
+
 
 # En nuestro proceso de EDA hemos visto que ibamos a tener nombres propios compuestos interesantes. Uniremos los más conocidos para evitar en suciar el proceso.
 # con reglas del tipo Justin => Bieber, Donald => Trump
@@ -34,7 +35,7 @@ fusion <- function(vector,nombre1,nombre2)
   }
 
 
-for(i in 1:length(items))
+for (i in 1:length(items))
 {
   items[[i]]<-fusion(items[[i]], "ben", "simmons")
   items[[i]]<-fusion(items[[i]], "donald", "trump")
@@ -44,24 +45,26 @@ for(i in 1:length(items))
   items[[i]]<-fusion(items[[i]], "justin", "bieber")
   items[[i]]<-fusion(items[[i]], "bernie", "sanders")
   items[[i]]<-fusion(items[[i]], "ted", "cruz")
+  items[[i]]<-fusion(items[[i]], "buddy", "hield")
   print(i)
 }
 
 
 transactions <- as(items, "transactions")
+
 summary(transactions)
 
-#*************************************************
+#**********************************************************
 #Itemsets Frecuentes
-#*************************************************
+#**********************************************************
 
-# Fijaremos el valor de soporte en 0.0001, en base al proceso de EDA, este es un valor aceptable ya que indicará que casi el 1% por ciento de Twitter como minimo 
+# Fijaremos el valor de soporte en 0.0005, en base al proceso de EDA, este es un valor aceptable ya que indicará que casi el 1% por ciento de Twitter como mínimo 
 # constata algo, teniendo en cuenta que podremos considerar la muestra como aleatoria y que los 14 tuits que relacionen terminos en concreto sobre la muestra de
 # 140000 tuits, podrá extrapolarse a una gran tendencia si lo llevamos al resto de tuiter, más, teniendo en cuenta que los temas de los que se podría hablar 
 # son infinitos. 
 
 
-itemsets <- apriori(transactions, parameter = list(sup = 0.0005, target="frequent itemsets",minlen=1))
+itemsets <- apriori(transactions, parameter = list(sup = 0.0001, target="frequent itemsets",minlen=1))
 itemsets <- sort(itemsets, by="support")
 inspect(head(itemsets,50))
 
@@ -100,14 +103,19 @@ closedItemsets <- sort(closedItemsets, by="support")
 
 # Ahora podemos ver cuantos itemsets, frecuentes cerrados y maximales tenemos.
 
-barplot( c(frequent=length(itemsets), closed=length(closedItemsets), maximal=length(maximalItemsets)), ylab="count", xlab="itemsets")
+barplot( c(frecuentes=length(itemsets), cerrados=length(closedItemsets), maximales=length(maximalItemsets)), ylab="count", xlab="itemsets")
 
 
 #*************************************************
 #Reglas de asociación
 #*************************************************
 
-rules <- apriori(transactions, parameter = list(sup = 0.00007, conf = 0.7, target="rules", minlen=2))
+t <- proc.time()
+
+rules <- apriori(transactions, parameter = list(sup = 0.0001, conf = 0.7, target="rules", minlen=2, maxtime=Inf))
+
+proc.time()-t  
+
 rules
 
 # Tenemos casi 3M de reglas de asociación
@@ -116,25 +124,25 @@ rules
 
 summary(rules)
 
-# top.rules.confidence <- sort(rules, decreasing = TRUE, na.last = NA, by = "confidence")
-# top.rules.support <- sort(rules, drecreasing= TRUE, na.last=NA, by="support")
-# inspect(head(top.rules.confidence,100))
-# inspect(head(top.rules.support,100))
+top.rules.confidence <- sort(rules, decreasing = TRUE, na.last = NA, by = "confidence")
+top.rules.support <- sort(rules, drecreasing= TRUE, na.last=NA, by="support")
+inspect(head(top.rules.confidence,100))
+inspect(head(top.rules.support,100))
+
 
 # Vamos a inspeccionar las reglas sobre algunos nombres propios interesantes que hemos podido ver en nuestro proceso de EDA
 
-
 # Trump
 
-rulesFilterTrump <- subset(rules, subset = lhs %in% "donald-trump")
-#rulesFilterTrump <- sort(rulesFilterTrump, by="support")
-#inspect(head(rulesFilterTrump, 200))
+rulesFilterTrump <- subset(rules, subset = rhs %in% "donald-trump")
+rulesFilterTrump <- sort(rulesFilterTrump, by="support")
+inspect(head(rulesFilterTrump, 200))
 
 # Hillary Clinton
 
-rulesFilterHC <- subset(rules, subset = lhs %in% "hillary-clinton")
-#rulesFilterHC <- sort(rulesFilterHC, by="support")
-#inspect(head(rulesFilterHC, 200))
+rulesFilterHC <- subset(rules, subset = rhs %in% "hillary-clinton")
+rulesFilterHC <- sort(rulesFilterHC, by="support")
+inspect(head(rulesFilterHC, 200))
 
 # Vamos a intentar crear algun gráfico  para visualizar estos conjuntos de reglas. 
 
@@ -149,36 +157,32 @@ rulesFilterHC <- subset(rules, subset = lhs %in% "hillary-clinton")
 rulesFilterTrump
 rulesFilterHC
 
-rulesSorted<-sort(rulesFilterTrump, by="confidence")
-#rulesSorted<-sort(rulesFilterHC, by="confidence")
+#rulesSorted <- sort(rulesFilterTrump, by="confidence")
+rulesSorted<-sort(rulesFilterHC, by="confidence")
 
 subsetMatrix <- is.subset(rulesSorted, rulesSorted)
 subsetMatrix[lower.tri(subsetMatrix, diag=TRUE)] <- FALSE
 redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
 
-rulesPrunedTrump <- rulesSorted[!redundant] 
-#rulesPrunedHC <- rulesSorted[!redundant] 
+#rulesPrunedTrump <- rulesSorted[!redundant] 
+rulesPrunedHC <- rulesSorted[!redundant] 
 
-
-inspect(rulesFilterTrump)
 
 #Ahora podemos analizar aquellas que no son redundantes, las ordenamos por soporte.
 
-rulesPrunedTrump<-sort(rulesPrunedTrump,by="support")
 
-inspect(head(rulesPrunedTrump,50))
-
-rulesPrunedTrump<-sort(rulesPrunedTrump, decreasing = FALSE, by=lhs)
-
-#rulesPrunedHC<-sort(rulesPrunedHC,by="support")
-#inspect(head(rulesPrunedHC,50))
+rulesPrunedTrump <- sort(rulesPrunedTrump,by="support")
+inspect(head(rulesPrunedTrump,64))
 
 
+rulesPrunedHC<-sort(rulesPrunedHC,by="support")
+inspect(head(rulesPrunedHC,69))
 
-# Vamos a intentar obtener las reglas solo para Trump
+# Vamos a intentar obtener las reglas solo para Trump, lo que nos permitirá valores de soporte muy bajos sin tener problemas de memoria
+# ya que solo se generarán las reglas que contengan en el consecuente a trump.
 
 rulesDonalTrump <- apriori (data=transactions, 
-                  parameter=list (supp=0.00007,conf = 0.6, minlen=2), 
+                  parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
                   appearance = list(default="lhs",rhs="donald-trump"), 
                   control = list (verbose=F)) 
 
@@ -219,4 +223,100 @@ stdm["donald",]
 stdm["bans",]
 stdm["serving",]
 stdm["transgender",]
+
+
+
+
+#Realizamos el mismo proceso para hillary-clinton
+
+
+rulesHillaryClinton <- apriori (data=transactions, 
+                            parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
+                            appearance = list(default="lhs",rhs="hillary-clinton"), 
+                            control = list (verbose=F)) 
+
+
+rulesSorted<-sort(rulesHillaryClinton, by="support")
+
+subsetMatrix <- is.subset(rulesSorted, rulesSorted)
+subsetMatrix[lower.tri(subsetMatrix, diag=TRUE)] <- FALSE
+redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
+
+rulesHillaryClinton <- rulesSorted[!redundant] 
+
+
+#**********************************************************
+# VISUALIZACION
+#**********************************************************
+
+#Para ver las reglas en función en forma de gráfico
+
+plot(rulesDonalTrump, method="graph")
+plot(rulesHillaryClinton, method="scatterplot")
+#Para ver como se distribuyen las reglas en funcion de los parámetros
+
+plot(rulesDonalTrump, method="scatterplot")
+plot(rulesHillaryClinton, method="scatterplot")
+#Para ver como se distribuyen las reglas en funcion de los parámetros y el tamaño (orden) de las mismas
+
+plot(rulesDonalTrump, method="two-key plot")
+plot(rulesHillaryClinton, method="two-key plot")
+
+#Vamos a generar una forma interesante de ver los gráficos, montaremos una nube de palabras con cada uno de los terminos en los antedecedentes de estas reglas
+# y así sabremos en funcion del tamaño que palabras son las que mas representan una tendencia en funcion de trump o hillary. 
+
+# Escribimos las reglas en un dataframe y las limpiamos de los caracteres propios de las reglas
+
+df.rulesDonalTrump <- as(rulesDonalTrump, "data.frame")
+string <- as.String(df.rulesDonalTrump$rules)
+string <- gsub("=>", "", string)
+string <- gsub("\\{", "", string)
+string <- gsub("}", "", string)
+string <- gsub(",", " ", string)
+string <- gsub("donald-trump", "", string)
+
+# Creamos la nube de palabras, para ello primero necesitamos crear de nuevo una matriz de frecuencias
+
+corpusReglasTrump<-Corpus(VectorSource(string))
+
+tdmReglasTrump <- TermDocumentMatrix(corpusReglasTrump,control = list(wordLengths = c(1, Inf)))
+mTrump <- as.matrix(tdmReglasTrump)
+
+# Pintamos la nube de términos
+
+word.freq <- sort(rowSums(mTrump), decreasing = T)
+pal <- brewer.pal(9, "BuGn")[-(1:4)]
+wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1, random.order = F, colors = pal)
+
+
+
+#Realizamos el mismo gráfico pero para hillary
+
+df.rulesHillaryClinton <- as(rulesHillaryClinton, "data.frame")
+string <- as.String(df.rulesHillaryClinton$rules)
+string <- gsub("=>", "", string)
+string <- gsub("\\{", "", string)
+string <- gsub("}", "", string)
+string <- gsub(",", " ", string)
+string <- gsub("hillary-clinton", "", string)
+
+# Creamos la nube de palabras, para ello primero necesitamos crear de nuevo una matriz de frecuencias
+
+corpusReglasHillary<-Corpus(VectorSource(string))
+
+tdmReglasHillary <- TermDocumentMatrix(corpusReglasHillary,control = list(wordLengths = c(1, Inf)))
+mHillary <- as.matrix(tdmReglasHillary)
+
+# Pintamos la nube de términos
+
+word.freq <- sort(rowSums(mHillary), decreasing = T)
+pal <- brewer.pal(9, "BuGn")[-(1:4)]
+wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1, random.order = F, colors = pal)
+
+
+
+
+
+
+
 

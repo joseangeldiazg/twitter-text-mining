@@ -2,6 +2,10 @@
 # FP-GROWTH - SPARK FRAMEWORK
 #*************************************************
 
+# En este script se usa el algoritmo de obtencion de reglas FP-GROWTH 
+
+# El motivo es realizar una comparación con los resultados obtenidos en APRIORI
+
 
 #Iniciamos sesión en Spark
 
@@ -17,7 +21,6 @@ sparkR.session(master = "local[*]", sparkConfig = list(spark.driver.memory = "7g
 
 #No podemos tener items repetidos en una transaccion, por lo que haremos una nueva versión
 
-
 items <- strsplit(as.character(finalCorpus$content), " ")
 
 reduce_row = function(i) {
@@ -26,8 +29,23 @@ reduce_row = function(i) {
 }
 
 itemsUnique<-lapply(finalCorpus$content[1:length(finalCorpus$content)],reduce_row)
+length(itemsUnique)
 
-listUnique<-strsplit(as.character(itemsUnique[1:855]), split=" ")
+listUnique<-strsplit(as.character(itemsUnique[1:length(itemsUnique)]), split=" ")
+
+for (i in 1:length(listUnique))
+{
+  listUnique[[i]]<-fusion(listUnique[[i]], "ben", "simmons")
+  listUnique[[i]]<-fusion(listUnique[[i]], "donald", "trump")
+  listUnique[[i]]<-fusion(listUnique[[i]], "hillary", "clinton")
+  listUnique[[i]]<-fusion(listUnique[[i]], "bill", "clinton")
+  listUnique[[i]]<-fusion(listUnique[[i]], "barack", "obama")
+  listUnique[[i]]<-fusion(listUnique[[i]], "justin", "bieber")
+  listUnique[[i]]<-fusion(listUnique[[i]], "bernie", "sanders")
+  listUnique[[i]]<-fusion(listUnique[[i]], "ted", "cruz")
+  print(i)
+}
+
 
 #Ya tenemos items únicos, ahora los pasamos a lista de elementos
 
@@ -43,14 +61,26 @@ raw_data <- read.df(
 
 data <- selectExpr(raw_data, "split(raw_items, ' ') as items")
 
-fpm <- spark.fpGrowth(data, itemsCol="items", minSupport=0.001, minConfidence=0.6)
 
-# Extracting frequent itemsets
+# Vamos a probar como se comporta el algoritmo para los valores de soporte de: 0.01, 0.001, 0.0001
+
+t <- proc.time() # Inicia el cronómetro
+fpm <- spark.fpGrowth(data, itemsCol="items", minSupport=0.0001, minConfidence=0.7)
+association_rules <- spark.associationRules(fpm)
+proc.time()-t    # Detiene el cronómetro
+
+# Para cada experimento pasamos el dataframe de Spark a DataFrame de R ya que este permite más acciones
+
+ar00001<-collect(association_rules)
+
+object.size(ar0001)
+
+#Obtenemos itemsets frecuentes
 
 frequent_itemsets<-spark.freqItemsets(fpm)
 showDF(frequent_itemsets)
 
-# Extracting association rules
+# Obtenemos reglas de asociación
 
 association_rules <- spark.associationRules(fpm)
 showDF(association_rules)
