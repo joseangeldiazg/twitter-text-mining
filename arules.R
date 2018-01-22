@@ -49,6 +49,7 @@ for (i in 1:length(items))
   print(i)
 }
 
+items[[1]]
 
 transactions <- as(items, "transactions")
 
@@ -315,8 +316,75 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1, random.order
 
 
 
+#*************************************************
+# Aproximación jerarquica basada en sentimientos
+#*************************************************
+
+# Las reglas de asociacion pueden estudiarse desde un punto de vista jerarquico, es decir, en el ejemplo de cesta de la compra: 
+# {Manzanas, platanos} => {Yogurt} podría sustituitse por {Fruta} => {Yogurt}
+# Dado que gracias a nuestro análisis de sentimientos tenemos polarizadas las palabras vamos jerarquizar estas reglas en función de los sentimientos. 
+
+# Primero nos quedamos con aquellos tuits que hacen referencia a los dos personajes estudiados
 
 
+encuentraNombres <- function(vector,nombre)
+{
+  final<-length(vector)
+  for(i in 1:final)
+  {
+    if(vector[i]==nombre)
+    {
+      return(vector)
+    }
+  }
+  return("borrar")
+}
+
+# Creamos listas vacias para añadir los tuits o "borrar" en caso de que el tuit no contenga los nombres
+
+listTrump <- list()
+listHillary <- list()
+
+for (i in 1:length(items))
+{
+  listTrump[[i]]<-encuentraNombres(items[[i]], "donald-trump")
+  listHillary[[i]]<-encuentraNombres(items[[i]], "hillary-clinton")
+  print(i)
+}
+
+# Limpiamos las listas aquellos que referencian a borrar
+
+listTrump<-listTrump[listTrump[1:length(listTrump)]!="borrar"]
+listHillary<-listHillary[listHillary[1:length(listHillary)]!="borrar"]
+
+
+#Llegados a este punto solo tenemos que intercambiar cada termino por su sentimiento asociado
+
+
+cambiaPalabraPorSentimiento <- function(vector)
+{
+  final <- length(vector)
+  print(final)
+  for(i in 1:final)
+  {
+    print(vector[i])
+    print(names(which.max(stdm[vector[i],])))
+    vector[i] <- names(which.max(stdm[vector[i],]))
+    print(vector[i])
+  }
+  return(vector)
+}
+
+
+for(i in 1: length(listTrump))
+{
+  listTrump[[i]] <- cambiaPalabraPorSentimiento(listTrump[[i]])
+  print("ITERACION")
+  print(i)
+}
+
+listTrump[[1]]
+ 
 
 
 
