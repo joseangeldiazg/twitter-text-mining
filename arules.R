@@ -49,8 +49,6 @@ for (i in 1:length(items))
   print(i)
 }
 
-items[[1]]
-
 transactions <- as(items, "transactions")
 
 summary(transactions)
@@ -358,33 +356,83 @@ listTrump<-listTrump[listTrump[1:length(listTrump)]!="borrar"]
 listHillary<-listHillary[listHillary[1:length(listHillary)]!="borrar"]
 
 
-#Llegados a este punto solo tenemos que intercambiar cada termino por su sentimiento asociado
+# Llegados a este punto solo tenemos que intercambiar cada termino por su sentimiento asociado
+# Para ello, localizamos el término en la matriz de sentimientos, obtenemos su mayor valor de sentimiento y lo sustituimos 
 
-
-cambiaPalabraPorSentimiento <- function(vector)
+cambiaPalabraPorSentimiento <- function(vector,nombre,matrixsentimientos)
 {
   final <- length(vector)
-  print(final)
   for(i in 1:final)
   {
-    print(vector[i])
-    print(names(which.max(stdm[vector[i],])))
-    vector[i] <- names(which.max(stdm[vector[i],]))
-    print(vector[i])
+    if(vector[i]  %in% rownames(matrixsentimientos))
+    {
+      vector[i] <- names(which.max(matrixsentimientos[vector[i],]))
+    }
+    else if(vector[i]==nombre)
+    {
+      vector[i]<-nombre
+    }
+    else
+    {
+      # Si no es ni el nombre si está en la lista de sentimiento será raro, y lo borramos
+      vector[i]<-"borrar"
+    }
   }
-  return(vector)
+  return(vector[vector!="borrar"])
 }
 
-
-for(i in 1: length(listTrump))
+for(i in 1:length(listTrump))
 {
-  listTrump[[i]] <- cambiaPalabraPorSentimiento(listTrump[[i]])
-  print("ITERACION")
-  print(i)
+  listTrump[[i]] <- cambiaPalabraPorSentimiento(listTrump[[i]],"donald-trump",stdm)
 }
 
-listTrump[[1]]
- 
+
+for(i in 1: length(listHillary))
+{
+  listHillary[[i]] <- cambiaPalabraPorSentimiento(listHillary[[i]],"hillary-clinton",stdm)
+}
 
 
+#Llegados a este punto obtenemos las transacciones para cada uno de los candidadtos. 
+
+
+transactionsTrump <- as(listTrump, "transactions")
+transactionsHillary  <- as(listHillary, "transactions")
+
+
+#Obtenemos las reglas de asociación. Ahora subiremos el soporte ya que al ser jerarquicas pueden ser mejores.
+
+rulesJerarquicaTrump <- apriori(transactionsTrump, parameter = list(sup = 0.01, conf = 0.8, target="rules", minlen=2, maxtime=Inf))
+rulesJerarquicaHillary <- apriori(transactionsHillary, parameter = list(sup = 0.01, conf = 0.8, target="rules", minlen=2, maxtime=Inf))
+
+#Eliminamos reglas redundantes
+
+rulesSorted <- sort(rulesJerarquicaTrump, by="confidence")
+subsetMatrix <- is.subset(rulesSorted, rulesSorted)
+subsetMatrix[lower.tri(subsetMatrix, diag=TRUE)] <- FALSE
+redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
+rulesJerarquicasPrunedTrump <- rulesSorted[!redundant] 
+
+
+rulesSorted<-sort(rulesJerarquicaHillary, by="confidence")
+subsetMatrix <- is.subset(rulesSorted, rulesSorted)
+subsetMatrix[lower.tri(subsetMatrix, diag=TRUE)] <- FALSE
+redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
+rulesJerarquicasPrunedHC <- rulesSorted[!redundant] 
+
+
+#Las ordenamos y visualizamos
+
+sorted.rulesJerarquicasPrunedTrump<-sort(rulesJerarquicasPrunedTrump, by="support")
+sorted.rulesJerarquicasPrunedHC<-sort(rulesJerarquicasPrunedHC, by="support")
+
+
+#Como tenemos pocas reglas las pasamos a un dataframe
+
+dftrumpsents   <- as(sorted.rulesJerarquicasPrunedTrump, "data.frame")
+dfhillarysents <- as(sorted.rulesJerarquicasPrunedHC, "data.frame")
+
+filter(dftrumpsents, grepl("donald-trump", dftrumpsents$rules))
+
+filter(dfhillarysents, grepl("hillary-clinton", dfhillarysents$rules))
 
