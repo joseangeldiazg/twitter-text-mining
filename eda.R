@@ -29,21 +29,58 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 3,random.order 
 #Vemos que son palabras para nada últiles y sin duda deben ser limpiadas, haremos varias pruebas para ver que rango de tamaño mantenemos
 
 tdm1_10 <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, 10)))
+tdm1_13 <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, 13)))
 tdm1_15 <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, 15)))
 tdm1_20 <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, 20)))
 tdm1_Inf <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, Inf)))
 
-terms<-c(135149, 123658, 117418, 86729)
-names(terms)<-c("Todas Palabras", "Tam [1-20]", "Tam [1-15]", "Tam [1-10]")
+terms<-c(135149, 123658, 117418,109790,86729)
+names(terms)<-c("Todas Palabras", "Tam [1-20]", "Tam [1-15]", "Tam [1-13]" ,"Tam [1-10]")
 
 barplot(terms)
 
 
 # Podemos ver como si cortamos el rango de palabras en las que tienen un tamaño entre 1 y 10 quizá estemos perdiendo contenido relevante, ya que 
-# bajamos mucho en la variedad de términos. Por encima de 15 no es ncesario coger ya que la variedad es poca y probablemente seán errores, por lo
+# bajamos mucho en la variedad de términos. Por encima de 15 no es necesario coger ya que la variedad es poca y probablemente seán errores, por lo
 # que el número óptimo lo situaremos en el rango de 1-13
 
 tdm <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(1, 13)))
+
+
+#Vamos a comprobar que no se pierde contenido relevante, para ello mostramos las palabras de más de 13 
+#carácteres y sus frecuencias. 
+
+tdm.mas.13 <- TermDocumentMatrix(finalCorpus,control = list(wordLengths = c(14, Inf)))
+
+maxFrequent.mas.13<-findFreqTerms(tdm.mas.13, 2)
+
+tdm.mas.13<-tdm.mas.13[maxFrequent.mas.13,]
+
+m.mas.13 <- as.matrix(tdm.mas.13)
+
+#Ahora creamos un gráfico para ver cuales son las palabras más usadas dentro de las eliminadas. 
+
+word.freq.mas.13 <- sort(rowSums(m.mas.13), decreasing = T)
+pal <- brewer.pal(9, "BuGn")[-(1:4)]
+
+head(word.freq.mas.13,150)
+
+palabrasMasUsadas<-data.frame(cbind(names(word.freq.mas.13[word.freq.mas.13>20]),word.freq.mas.13[word.freq.mas.13>20]))
+colnames(palabrasMasUsadas)<-c("Palabra", "Frecuencia")
+
+palabrasMasUsadas$Palabra<-factor(palabrasMasUsadas$Palabra, levels = palabrasMasUsadas$Palabra)
+
+ggplot(data=palabrasMasUsadas, aes(x=Palabra,y=Frecuencia)) +
+  geom_bar(stat="identity", position="stack") +
+  coord_flip()
+
+palabrasMasUsadas2<-as.numeric(word.freq.mas.13[word.freq.mas.13>30])
+names(palabrasMasUsadas2)<-names(word.freq.mas.13[word.freq.mas.13>30]) 
+
+barplot(palabrasMasUsadas2, horiz=T, xlim = c(0,1000), xpd=F, las=2, space=c(2))
+
+
+#*********************************************************************
 
 
 # Dado que el estudio se basa en reglas de asociación, dificilmente encontraremos alguna regla útil en palabras con frecuencias por debajo de 20,
@@ -95,7 +132,12 @@ palabrasMasUsadas$Palabra<-factor(palabrasMasUsadas$Palabra, levels = palabrasMa
 
 ggplot(data=palabrasMasUsadas, aes(x=Palabra,y=Frecuencia)) +
       geom_bar(stat="identity", position="stack") +
-      coord_flip() 
+      coord_flip()
+
+palabrasMasUsadas2<-as.numeric(word.freq[word.freq>1700])
+names(palabrasMasUsadas2)<-names(word.freq[word.freq>1700]) 
+  
+barplot(palabrasMasUsadas2, horiz=T, xlim = c(1000,7000), xpd=F, las=2)
 
 # Si usaramos el dataset completo el aumento de palabras y frecuencias harán del gráfico una mancha de la que dificilmente podrámos obtener información
 # relevante. Lo que si podemos concluir es que para las palabras con mucha frecuencia, usadas más de 1700 veces, ya aparecen ciertos términos interesantes 

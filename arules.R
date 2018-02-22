@@ -171,11 +171,11 @@ rulesPrunedHC <- rulesSorted[!redundant]
 
 
 rulesPrunedTrump <- sort(rulesPrunedTrump,by="support")
-inspect(head(rulesPrunedTrump,64))
+arules::inspect(head(rulesPrunedTrump,64))
 
 
 rulesPrunedHC<-sort(rulesPrunedHC,by="support")
-inspect(head(rulesPrunedHC,69))
+arules::inspect(head(rulesPrunedHC,69))
 
 # Vamos a intentar obtener las reglas solo para Trump, lo que nos permitirá valores de soporte muy bajos sin tener problemas de memoria
 # ya que solo se generarán las reglas que contengan en el consecuente a trump.
@@ -195,8 +195,8 @@ redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
 rulesDonalTrump <- rulesSorted[!redundant] 
 rulesDonalTrump
 
-inspect(head(rulesDonalTrump, 200))
-inspect(tail(rulesDonalTrump, 58))
+arules::inspect(head(rulesDonalTrump, 142))
+arules::inspect(tail(rulesDonalTrump, 14))
 
 
 # Hemos encontrado algunas reglas interesantes como: 
@@ -243,6 +243,7 @@ redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
 
 rulesHillaryClinton <- rulesSorted[!redundant] 
 
+arules::inspect(head(rulesHillaryClinton, 100))
 
 #**********************************************************
 # VISUALIZACION
@@ -251,12 +252,12 @@ rulesHillaryClinton <- rulesSorted[!redundant]
 #Para ver las reglas en función en forma de gráfico
 
 plot(rulesDonalTrump, method="graph")
-plot(rulesHillaryClinton, method="scatterplot")
-#Para ver como se distribuyen las reglas en funcion de los parámetros
+plot(rulesHillaryClinton, method="graph")
+#Para ver como se distribuyen las reglas en función de los parámetros
 
 plot(rulesDonalTrump, method="scatterplot")
 plot(rulesHillaryClinton, method="scatterplot")
-#Para ver como se distribuyen las reglas en funcion de los parámetros y el tamaño (orden) de las mismas
+#Para ver como se distribuyen las reglas en función de los parámetros y el tamaño (orden) de las mismas
 
 plot(rulesDonalTrump, method="two-key plot")
 plot(rulesHillaryClinton, method="two-key plot")
@@ -278,7 +279,7 @@ string <- gsub("donald-trump", "", string)
 
 corpusReglasTrump<-Corpus(VectorSource(string))
 
-tdmReglasTrump <- TermDocumentMatrix(corpusReglasTrump,control = list(wordLengths = c(1, Inf)))
+tdmReglasTrump <- TermDocumentMatrix(corpusReglasTrump,control = list(wordLengths = c(1, 13)))
 mTrump <- as.matrix(tdmReglasTrump)
 
 # Pintamos la nube de términos
@@ -303,7 +304,7 @@ string <- gsub("hillary-clinton", "", string)
 
 corpusReglasHillary<-Corpus(VectorSource(string))
 
-tdmReglasHillary <- TermDocumentMatrix(corpusReglasHillary,control = list(wordLengths = c(1, Inf)))
+tdmReglasHillary <- TermDocumentMatrix(corpusReglasHillary,control = list(wordLengths = c(1, 13)))
 mHillary <- as.matrix(tdmReglasHillary)
 
 # Pintamos la nube de términos
@@ -318,7 +319,7 @@ wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1, random.order
 # Aproximación jerarquica basada en sentimientos
 #*************************************************
 
-# Las reglas de asociacion pueden estudiarse desde un punto de vista jerarquico, es decir, en el ejemplo de cesta de la compra: 
+# Las reglas de asociación pueden estudiarse desde un punto de vista jerárquico, es decir, en el ejemplo de cesta de la compra: 
 # {Manzanas, platanos} => {Yogurt} podría sustituitse por {Fruta} => {Yogurt}
 # Dado que gracias a nuestro análisis de sentimientos tenemos polarizadas las palabras vamos jerarquizar estas reglas en función de los sentimientos. 
 
