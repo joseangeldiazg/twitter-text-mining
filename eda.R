@@ -85,7 +85,7 @@ barplot(palabrasMasUsadas2, horiz=T, xlim = c(0,1000), xpd=F, las=2, space=c(2))
 
 # Dado que el estudio se basa en reglas de asociación, dificilmente encontraremos alguna regla útil en palabras con frecuencias por debajo de 20,
 # ya que usaremos valores de soporte aceptables, por ello, eliminaremos los términos poco frecuentes, es decir, nos quedaremos con valores de frecuencia 
-# mayores o iguales a 20
+# mayores o iguales a 30
 
 maxFrequent<-findFreqTerms(tdm, 20)
 

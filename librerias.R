@@ -29,3 +29,16 @@ require(slam)
 require(ggplot2)
 require(arules)
 require (arulesViz)
+library(dplyr)
+
+
+#****************************************************************************
+#*******************************LIBRERIAS DIFUSAS****************************
+#****************************************************************************
+
+require(lfl)
+require(FuzzyR)
+require(RKEEL)
+
+
+

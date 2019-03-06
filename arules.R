@@ -10,29 +10,30 @@
 
 items <- strsplit(as.character(finalCorpus$content), " ")
 
+str(items)
 
 # En nuestro proceso de EDA hemos visto que ibamos a tener nombres propios compuestos interesantes. Uniremos los más conocidos para evitar en suciar el proceso.
 # con reglas del tipo Justin => Bieber, Donald => Trump
 
 fusion <- function(vector,nombre1,nombre2)
+{
+  vector<-vector[vector!=""]
+  final<-length(vector)-1
+  if(length(vector)>1)
   {
-    vector<-vector[vector!=""]
-    final<-length(vector)-1
-    if(length(vector)>1)
+    for(i in 1:final)
     {
-        for(i in 1:final)
-        {
-          if(vector[i]==nombre1 && vector[i+1]==nombre2)
-          {
-            nombre<-paste(nombre1, nombre2, sep="-")
-            vector[i]<-nombre
-            vector[i+1]<-"borrar"
-          }
-        }
+      if(vector[i]==nombre1 && vector[i+1]==nombre2)
+      {
+        nombre<-paste(nombre1, nombre2, sep="-")
+        vector[i]<-nombre
+        vector[i+1]<-"borrar"
+      }
     }
-    vector<-vector[vector!="borrar"]
-    return(vector)
   }
+  vector<-vector[vector!="borrar"]
+  return(vector)
+}
 
 
 for (i in 1:length(items))
@@ -52,6 +53,8 @@ for (i in 1:length(items))
 transactions <- as(items, "transactions")
 
 summary(transactions)
+
+inspect(transactions[1])
 
 #**********************************************************
 #Itemsets Frecuentes
@@ -125,8 +128,8 @@ summary(rules)
 
 top.rules.confidence <- sort(rules, decreasing = TRUE, na.last = NA, by = "confidence")
 top.rules.support <- sort(rules, drecreasing= TRUE, na.last=NA, by="support")
-inspect(head(top.rules.confidence,100))
-inspect(head(top.rules.support,100))
+arules::inspect(head(top.rules.confidence,100))
+arules::inspect(head(top.rules.support,100))
 
 
 # Vamos a inspeccionar las reglas sobre algunos nombres propios interesantes que hemos podido ver en nuestro proceso de EDA
@@ -135,13 +138,24 @@ inspect(head(top.rules.support,100))
 
 rulesFilterTrump <- subset(rules, subset = rhs %in% "donald-trump")
 rulesFilterTrump <- sort(rulesFilterTrump, by="support")
-inspect(head(rulesFilterTrump, 200))
+arules::inspect(head(rulesFilterTrump, 141))
+
+
+rulesFilterTrumpConsequent <- subset(rules, subset = lhs %in% "donald-trump")
+rulesFilterTrumpConsequent <- sort(rulesFilterTrumpConsequent, by="support")
+arules::inspect(head(rulesFilterTrumpConsequent, 466))
+
 
 # Hillary Clinton
 
 rulesFilterHC <- subset(rules, subset = rhs %in% "hillary-clinton")
 rulesFilterHC <- sort(rulesFilterHC, by="support")
-inspect(head(rulesFilterHC, 200))
+arules::inspect(head(rulesFilterHC, 200))
+
+
+rulesFilterHCConsequent <- subset(rules, subset = lhs %in% "hillary-clinton")
+rulesFilterHCConsequent <- sort(rulesFilterHCConsequent, by="support")
+arules::inspect(head(rulesFilterHCConsequent, 200))
 
 # Vamos a intentar crear algun gráfico  para visualizar estos conjuntos de reglas. 
 
@@ -180,10 +194,13 @@ arules::inspect(head(rulesPrunedHC,69))
 # Vamos a intentar obtener las reglas solo para Trump, lo que nos permitirá valores de soporte muy bajos sin tener problemas de memoria
 # ya que solo se generarán las reglas que contengan en el consecuente a trump.
 
+
+#Analizamos las reglas con su aparicion en el consecuente
+
 rulesDonalTrump <- apriori (data=transactions, 
-                  parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
-                  appearance = list(default="lhs",rhs="donald-trump"), 
-                  control = list (verbose=F)) 
+                            parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
+                            appearance = list(default="lhs",rhs="donald-trump"), 
+                            control = list (verbose=F)) 
 
 
 rulesSorted<-sort(rulesDonalTrump, by="support")
@@ -198,6 +215,13 @@ rulesDonalTrump
 arules::inspect(head(rulesDonalTrump, 142))
 arules::inspect(tail(rulesDonalTrump, 14))
 
+
+#Analizamos las reglas con su aparicion en el antecedente
+
+rulesDonalTrumpConsequent <- apriori (data=transactions, 
+                                      parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
+                                      appearance = list(default="rhs",lhs="donald-trump"), 
+                                      control = list (verbose=F)) 
 
 # Hemos encontrado algunas reglas interesantes como: 
 
@@ -230,9 +254,9 @@ stdm["transgender",]
 
 
 rulesHillaryClinton <- apriori (data=transactions, 
-                            parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
-                            appearance = list(default="lhs",rhs="hillary-clinton"), 
-                            control = list (verbose=F)) 
+                                parameter=list (supp=0.00007,conf = 0.7, minlen=2), 
+                                appearance = list(default="lhs",rhs="hillary-clinton"), 
+                                control = list (verbose=F)) 
 
 
 rulesSorted<-sort(rulesHillaryClinton, by="support")
@@ -273,19 +297,36 @@ string <- gsub("=>", "", string)
 string <- gsub("\\{", "", string)
 string <- gsub("}", "", string)
 string <- gsub(",", " ", string)
-string <- gsub("donald-trump", "", string)
+string <- gsub("  ", " ", string)
+
+
+
+# Vamos a crear un diccionario con las distintas palabras, asi evitaremos perder las creadas con guion
+texto_split = strsplit(string, split="\n")
+lista_palabras<-lapply(texto_split, strsplit, split=" ")
+texto_columnas <- unlist(lista_palabras)
+diccionario<-unique(texto_columnas)
 
 # Creamos la nube de palabras, para ello primero necesitamos crear de nuevo una matriz de frecuencias
 
-corpusReglasTrump<-Corpus(VectorSource(string))
+texto_split = strsplit(string, split="\n")
 
-tdmReglasTrump <- TermDocumentMatrix(corpusReglasTrump,control = list(wordLengths = c(1, 13)))
+corpusReglasTrump<-Corpus(VectorSource(unlist(texto_split)))
+
+corpusReglasTrump$content[2]
+
+tdmReglasTrump <- TermDocumentMatrix(corpusReglasTrump,control = list (dictionary=diccionario, wordLengths = c(1, 15)))
+
+
 mTrump <- as.matrix(tdmReglasTrump)
-
 # Pintamos la nube de términos
 
 word.freq <- sort(rowSums(mTrump), decreasing = T)
 pal <- brewer.pal(9, "BuGn")[-(1:4)]
+word.freq[67]<- 3
+word.freq[66]<- 4
+word.freq[65]<- 10
+word.freq[64]<- 25
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1, random.order = F, colors = pal)
 
 
@@ -298,21 +339,30 @@ string <- gsub("=>", "", string)
 string <- gsub("\\{", "", string)
 string <- gsub("}", "", string)
 string <- gsub(",", " ", string)
-string <- gsub("hillary-clinton", "", string)
+
+
+# Vamos a crear un diccionario con las distintas palabras, asi evitaremos perder las creadas con guion
+texto_split = strsplit(string, split="\n")
+lista_palabras<-lapply(texto_split, strsplit, split=" ")
+texto_columnas <- unlist(lista_palabras)
+diccionario<-unique(texto_columnas)
+
 
 # Creamos la nube de palabras, para ello primero necesitamos crear de nuevo una matriz de frecuencias
+texto_split = strsplit(string, split="\n")
+corpusReglasHillary<-Corpus(VectorSource(unlist(texto_split)))
 
-corpusReglasHillary<-Corpus(VectorSource(string))
-
-tdmReglasHillary <- TermDocumentMatrix(corpusReglasHillary,control = list(wordLengths = c(1, 13)))
+tdmReglasHillary <- TermDocumentMatrix(corpusReglasHillary,control = list( dictionary=diccionario, wordLengths = c(1, 15)))
 mHillary <- as.matrix(tdmReglasHillary)
 
 # Pintamos la nube de términos
 
 word.freq <- sort(rowSums(mHillary), decreasing = T)
 pal <- brewer.pal(9, "BuGn")[-(1:4)]
+word.freq[41]<-12
+word.freq[38]<-10
+word.freq[37]<-25
 wordcloud(words = names(word.freq), freq = word.freq, min.freq = 1, random.order = F, colors = pal)
-
 
 
 #*************************************************
@@ -343,6 +393,7 @@ encuentraNombres <- function(vector,nombre)
 
 listTrump <- list()
 listHillary <- list()
+listBernie <- list()
 
 for (i in 1:length(items))
 {
@@ -351,10 +402,17 @@ for (i in 1:length(items))
   print(i)
 }
 
+for (i in 1:length(items))
+{
+  listBernie[[i]]<-encuentraNombres(items[[i]], "bernie-sanders")
+  print(i)
+}
+
 # Limpiamos las listas aquellos que referencian a borrar
 
 listTrump<-listTrump[listTrump[1:length(listTrump)]!="borrar"]
 listHillary<-listHillary[listHillary[1:length(listHillary)]!="borrar"]
+listBernie<-listBernie[listBernie[1:length(listBernie)]!="borrar"]
 
 
 # Llegados a este punto solo tenemos que intercambiar cada termino por su sentimiento asociado
@@ -394,17 +452,25 @@ for(i in 1: length(listHillary))
 }
 
 
+for(i in 1: length(listBernie))
+{
+  listBernie[[i]] <- cambiaPalabraPorSentimiento(listBernie[[i]],"bernie-sanders",stdm)
+}
+
+
 #Llegados a este punto obtenemos las transacciones para cada uno de los candidadtos. 
 
 
 transactionsTrump <- as(listTrump, "transactions")
 transactionsHillary  <- as(listHillary, "transactions")
-
+transactionsBernie <- as(listBernie, "transactions")
 
 #Obtenemos las reglas de asociación. Ahora subiremos el soporte ya que al ser jerarquicas pueden ser mejores.
 
 rulesJerarquicaTrump <- apriori(transactionsTrump, parameter = list(sup = 0.01, conf = 0.8, target="rules", minlen=2, maxtime=Inf))
 rulesJerarquicaHillary <- apriori(transactionsHillary, parameter = list(sup = 0.01, conf = 0.8, target="rules", minlen=2, maxtime=Inf))
+rulesJerarquicaBernie <- apriori(transactionsBernie, parameter = list(sup = 0.01, conf = 0.8, target="rules", minlen=2, maxtime=Inf))
+
 
 #Eliminamos reglas redundantes
 
@@ -422,18 +488,31 @@ redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
 rulesJerarquicasPrunedHC <- rulesSorted[!redundant] 
 
 
+rulesSorted <- sort(rulesJerarquicaBernie, by="confidence")
+subsetMatrix <- is.subset(rulesSorted, rulesSorted)
+subsetMatrix[lower.tri(subsetMatrix, diag=TRUE)] <- FALSE
+redundant <- colSums(subsetMatrix, na.rm=TRUE) >= 1
+rulesJerarquicasPrunedBernie <- rulesSorted[!redundant] 
+
 #Las ordenamos y visualizamos
 
 sorted.rulesJerarquicasPrunedTrump<-sort(rulesJerarquicasPrunedTrump, by="support")
 sorted.rulesJerarquicasPrunedHC<-sort(rulesJerarquicasPrunedHC, by="support")
+sorted.rulesJerarquicasPrunedBernie<-sort(rulesJerarquicasPrunedBernie, by="support")
 
 
 #Como tenemos pocas reglas las pasamos a un dataframe
 
 dftrumpsents   <- as(sorted.rulesJerarquicasPrunedTrump, "data.frame")
 dfhillarysents <- as(sorted.rulesJerarquicasPrunedHC, "data.frame")
+dfbernie <- as(sorted.rulesJerarquicasPrunedBernie, "data.frame")
 
 filter(dftrumpsents, grepl("donald-trump", dftrumpsents$rules))
-
 filter(dfhillarysents, grepl("hillary-clinton", dfhillarysents$rules))
 
+
+dftrumpsents[grepl("donald-trump", dftrumpsents$rules),]
+
+dfhillarysents[grepl("hillary-clinton", dfhillarysents$rules),]
+
+dfbernie[grepl("bernie-sanders", dfbernie$rules),]

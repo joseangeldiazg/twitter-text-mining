@@ -10,7 +10,6 @@
 
 d<-get_nrc_sentiment(finalCorpus$content)
 
-
 #Creamos un data frame con los sentimientos obtenidos
 
 td<-data.frame(t(d))
@@ -23,7 +22,8 @@ td_new <- cbind("sentiment" = rownames(td_new), td_new)
 rownames(td_new) <- NULL
 td_new2<-td_new[1:8,]
 qplot(sentiment, data=td_new2, weight=count, geom="bar",fill=sentiment)+ggtitle("Twitter sentiments")
-
+text(2, 6, "A label")
+text(5, 10, "Another label")
 # Parece que tenemos un número muy elevado de tuits que hablan veracidad o afirmaciones. Esto es normal ya que en twitter mucha gente afrima hechos o noticias por lo
 # que era de esperar que este sentimiento fuera el mayoritario. Vemos que la diversión o el agrado tiene también una gran representación, junto con la anticipación, 
 # este último debe ser analizado para ver que términos se asocian con anticipación, ya que de primeras parece ambiguo. El resto de los sentimientos están equilibrados.
