@@ -80,7 +80,7 @@ normalizado<-t(normalizado)
 
 #Vamos a intentar pasar estos datos a transaccion
 normalizado
-write.csv(normalizado, file = "datosdifusos.csv")
+write.csv2(normalizado, file = "datosdifusos.csv", sep="\t")
 
 df.FuzzyRules<-as.data.frame(normalizado)
 
@@ -89,5 +89,10 @@ df.FuzzyRules<-as.data.frame(normalizado)
 fuzzAp <- FuzzyApriori_A(df.FuzzyRules)
 fuzzAp$run()
 
+#Vamos a guardar varios datos para cargarlos en el otro proyecto
 
+save(finalCorpus, items, file="/Users/joseadiazg/Desktop/twitter-text-mining/export.Rdata")
+unlink("export.Rdata")
+
+write(transactions, file="/Users/joseadiazg/Desktop/twitter-text-mining/transaccionescrips.csv")
 
