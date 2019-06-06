@@ -10,6 +10,7 @@
 
 d<-get_nrc_sentiment(finalCorpus$content)
 
+
 #Creamos un data frame con los sentimientos obtenidos
 
 td<-data.frame(t(d))
@@ -74,3 +75,57 @@ comparison.cloud(stdm, random.order=FALSE,
 
 # Un sentimiento muy interesante es el miedo, donde vemos un claro ejemplo de la sociedad americana. Vemos que la policia o el ejercito suscitan miedo, pero también 
 # aparece la palabra transgenero, bien sabido es la homofobia del pais que tenemos entre manos, por lo que parece que nuestro proceso ha funcionado bastante bien. 
+
+
+
+#Vamos a comparar nuestro proceso de generalizacion de reglas basadas en sentimientos con una clasificacion con el teorema de Bayes 
+
+#Aquí tenemos listas de items - vamos a crear listas con el texto nuevamente reconstruido
+
+listTrump
+listHillary
+listBernie
+
+
+unlistTrump<-vapply(listTrump, function(x) {paste(x, collapse = " ")}, FUN.VALUE = character(1))
+unlistHillary<-vapply(listHillary, function(x) {paste(x, collapse = " ")}, FUN.VALUE = character(1))
+unlistBernie<-vapply(listBernie, function(x) {paste(x, collapse = " ")}, FUN.VALUE = character(1))
+
+
+emotionsTrump <- classify_emotion(unlistTrump, algorithm='bayes')
+emotionsHillary <- classify_emotion(unlistHillary, algorithm='bayes')
+emotionsBernie <- classify_emotion(unlistBernie, algorithm='bayes')
+
+
+
+#Vamos a realizar la compracion con donald trump
+
+polaritiesTrump = classify_polarity(unlistTrump, algorithm='bayes')
+
+
+df = data.frame(text=unlistTrump, emotion=emotionsTrump[,'BEST_FIT'],
+                polarity=polaritiesTrump[,'BEST_FIT'], stringsAsFactors=FALSE)
+df[is.na(df)] <- "N.A."
+
+plot_ly(df, x=~emotion,type="histogram",
+        marker = list(color = c('grey', 'red',
+                                'orange', 'navy',
+                                'yellow'))) %>%
+  layout(yaxis = list(title='Count'), title="Sentiment Analysis: Emotions")
+
+
+
+
+
+
+#Creamos un data frame con los sentimientos obtenidos
+dTrump<-get_nrc_sentiment(unlistTrump)
+tdTrump<-data.frame(t(dTrump))
+
+#Asignamos por mayoria el sentimiento asociado 
+
+resultEmotionTrump<-colnames(dTrump)[apply(dTrump,1,which.max)]
+
+table(resultEmotionTrump)
+
+barplot(table(resultEmotionTrump), col=rainbow(10))

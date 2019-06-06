@@ -6,6 +6,25 @@
 # Ejecutarlo 1 vez antes de comenzar a trabajar con el código 
 
 install.packages("openNLPmodels.en",repos = "http://datacube.wu.ac.at/",type = "source")
+install.packages("RWeka", "qdap", "devtools", "dplyr", "wordcloud","rJava", "openNLP", "foreach", "doParallel", "plyr", "reshape2", "syuzhet", "ggplot2", "arulesViz")
+
+#Libreria para el análisis de sentimientos
+
+install.packages("gh")
+install.packages("curl")
+install.packages("httr")
+install.packages("usethis")
+install.packages("devtools")
+
+library(devtools)
+if(!require(Rstem)) install_url("http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz")
+if(!require(sentiment)) install_url("http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz")
+library(Rstem)
+library(sentiment)
+library(plotly)
+
+
+#Resto de librerias 
 
 require(RWeka)
 require(qdap)
@@ -39,6 +58,3 @@ library(dplyr)
 require(lfl)
 require(FuzzyR)
 require(RKEEL)
-
-
-
